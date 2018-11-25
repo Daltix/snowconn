@@ -1,0 +1,2 @@
+snowflake-sqlalchemy
+git+ssh://git@github.com/Daltix/product-team-tooling.git@develop#egg=credsman&subdirectory=credsman
