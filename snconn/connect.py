@@ -1,24 +1,22 @@
 import os
 import json
-
 from credsman import SecretManager
 from sqlalchemy import create_engine
 import snowflake.connector
-
 import configparser
 
-stage = os.environ.get('STAGE', 'dev')
 alchemy_engine = None
 connection = None
 
 
-def credsman_connect(credsman_name: str, db):
+def credsman_connect(credsman_name: str, db: str='public',
+                     schema: str='public'):
     sm = SecretManager()
     creds = sm.get_secret(credsman_name)
     _connect(creds, db)
 
 
-def connect(db: str):
+def connect(db: str='public', schema: str='public'):
     home = os.path.expanduser("~")
     snowsql_config = f'{home}/.snowsql/config'
 
@@ -36,10 +34,18 @@ def connect(db: str):
         'PASSWORD': config['connections']['password'],
         'ROLE': config['connections']['rolename']
     }
-    _connect(creds, db)
+    _connect(creds, db, schema)
 
 
-def _connect(creds: dict, db):
+def get_alchemy_engine():
+    return alchemy_engine
+
+
+def get_connection():
+    return connection
+
+
+def _connect(creds: dict, db, schema):
     global connection, alchemy_engine
 
     username = creds['USERNAME']
@@ -47,8 +53,12 @@ def _connect(creds: dict, db):
     account = creds['ACCOUNT']
     role = creds['ROLE']
     if alchemy_engine is None:
+        if '.' not in account:
+            print('You may need to configure your account name to include the '
+                  f'region. For example: {account}.eu-west-1')
         conn = create_engine(
-            f'snowflake://{username}:{password}@{account}/{db}?role={role}'
+            f'snowflake://{username}:{password}@{account}/{db}?role={role}&'
+            f'schema={schema}'
         ).connect()
         alchemy_engine = conn
     if connection is None:
@@ -57,7 +67,8 @@ def _connect(creds: dict, db):
             password=password,
             account=account,
             role=role,
-            database=db
+            database=db,
+            schema=schema
         )
         connection = conn
 
