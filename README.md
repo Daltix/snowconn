@@ -36,14 +36,14 @@ If you don't include the `eu-west-1` part, it will hang for about a minute and t
 
 Now that you are able to execute `snowsql` to successfully connect, you are ready to use the `connect` function:
 
-```
+```py
 from snconn import connect
 
 connect()
 ```
 That's it you are connected! You can connect to a specific schema / database with the following:
 
-```
+```py
 connect('pricing_prod', 'public')
 ```
 
@@ -60,7 +60,7 @@ Now you must know the name of the secret that you want to use. You can find the 
 Now that you know the name of the secret, you MUST be sure that the context in which it is running has access to read
 that secret. Once this is done, you can now execute the following code:
 
-```
+```py
 from snconn import credsman_connect
 
 credsman_connect('price_plotter')
@@ -68,7 +68,7 @@ credsman_connect('price_plotter')
 
 And you are connected! You can also pass the database and schema along
 
-```
+```py
 from snconn import credsman_connect
 credsman_connect('price_plotter', 'pricing_prod', 'public')
 ```
@@ -120,7 +120,7 @@ if you want to use it you must satisfy this dependency yourself.
 
 It takes one sql string as an argument and returns a dataframe.
 
-```
+```py
 >>> from snconn import read_df
 >>> read_df('select daltix_id, downloaded_on, price from price limit 5;')
                                            daltix_id       downloaded_on  price
