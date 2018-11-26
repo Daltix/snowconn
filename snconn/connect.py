@@ -111,7 +111,7 @@ def exc_string(sql):
 def exc_file(fname):
     with open(fname) as fh:
         sql = fh.read()
-    exc_string(sql)
+    return exc_string(sql)
 
 
 def read_df(sql):
