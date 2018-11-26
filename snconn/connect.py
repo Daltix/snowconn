@@ -13,7 +13,7 @@ def credsman_connect(credsman_name: str, db: str='public',
                      schema: str='public'):
     sm = SecretManager()
     creds = sm.get_secret(credsman_name)
-    _connect(creds, db)
+    _connect(creds, db, schema)
 
 
 def connect(db: str='public', schema: str='public'):
