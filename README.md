@@ -98,6 +98,12 @@ If you have multiple sql statements in a single string that you want to execute 
 will fit into memory ,this is the function that you want to use. It returns a list of cursors that are a result
 of each of the statements that are contained in the string. See [here](https://docs.snowflake.net/manuals/user-guide/python-connector-api.html#execute_string) for the full documentation.
 
+```py
+>>> from snconn import exc_string
+>>> exc_string('create temporary table price_small as (select * from price limit 1); select * from price_small;')
+[<snowflake.connector.cursor.SnowflakeCursor object at 0x10f537898>, <snowflake.connector.cursor.SnowflakeCursor object at 0x10f52c588>]
+```
+
 ### exc_file
 
 If you have the contents of an sql file that you want to execute, you can use this function. For example:
@@ -120,15 +126,15 @@ if you want to use it you must satisfy this dependency yourself.
 
 It takes one sql string as an argument and returns a dataframe.
 
-```py
+```bash
 >>> from snconn import read_df
 >>> read_df('select daltix_id, downloaded_on, price from price limit 5;')
-                                           daltix_id       downloaded_on  price
-0  0d3c30353035a6ab5747237a1f2600bbf5ddd27401372c... 2018-11-18 00:00:01  37.99
-1  f5be8a5da3bde2da6a63fcad4e5c30823027324092234c... 2018-11-18 00:00:02   9.99
-2  f5be8a5da3bde2da6a63fcad4e5c30823027324092234c... 2018-11-18 00:00:02   0.40
-3  807e2a7706b8c515264fa55bed3891d5685ac5ee0148f0... 2018-11-18 00:00:04   3.70
-4  1e56339f99dc866cd4b87679aa686556a5ad2398d00c95... 2018-11-18 00:00:06   3.76
+                                        daltix_id       downloaded_on  price
+0  0d3c30353035a6ab5747237a1f2600bbf5ddd27401372c 2018-11-18 00:00:01  37.99
+1  f5be8a5da3bde2da6a63fcad4e5c30823027324092234c 2018-11-18 00:00:02   9.99
+2  f5be8a5da3bde2da6a63fcad4e5c30823027324092234c 2018-11-18 00:00:02   0.40
+3  807e2a7706b8c515264fa55bed3891d5685ac5ee0148f0 2018-11-18 00:00:04   3.70
+4  1e56339f99dc866cd4b87679aa686556a5ad2398d00c95 2018-11-18 00:00:06   3.76
 >>> 
 ```
 
