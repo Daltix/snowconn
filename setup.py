@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='snconn',
-    version='0.0.3',
+    version='0.0.4',
     description='Python utilities for connection to Daltix snowflake data '
                 'source',
     # url='TODO',
