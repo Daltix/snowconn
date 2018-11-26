@@ -9,4 +9,5 @@ from .connect import (
     connection,
     get_alchemy_engine,
     get_connection,
+    get_current_role,
 )

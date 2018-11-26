@@ -126,6 +126,6 @@ def read_df(sql):
     return pd.read_sql_query(sql, alchemy_engine)
 
 
-def current_role():
+def get_current_role():
     results = exc_simple('show roles;')
     return [r for r in results if r['is_current'] == 'Y'][0]['name']
