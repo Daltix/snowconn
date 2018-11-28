@@ -73,6 +73,50 @@ from snconn import credsman_connect
 credsman_connect('price_plotter', 'pricing_prod', 'public')
 ```
 
+An example of a policy that gives access to the `price_plotter` looks like this:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+            ],
+            "Resource": "arn:aws:secretsmanager:eu-west-1:***REMOVED***:secret:price_plotter-***REMOVED***"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetRandomPassword",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+And an example of this in a serverless.yml looks like this:
+
+```
+iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - secretsmanager:DescribeSecret
+        - secretsmanager:List*
+      Resource:
+        - "*"
+    - Effect: Allow
+      Action:
+        - secretsmanager:*
+      Resource:
+        - { Fn::Sub: "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:price_plotter-??????" }
+```
+
 ## API
 
 Now that you're connected, there are a few low-level functions that you can use to programatically interact with
