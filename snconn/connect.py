@@ -10,8 +10,8 @@ connection = None
 
 
 def credsman_connect(credsman_name: str, db: str='public',
-                     schema: str='public'):
-    sm = SecretManager()
+                     schema: str='public', *args, **kwargs):
+    sm = SecretManager(*args, **kwargs)
     creds = sm.get_secret(credsman_name)
     _connect(creds, db, schema)
 
