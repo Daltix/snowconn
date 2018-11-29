@@ -206,6 +206,10 @@ class SnowConn:
         self._connection.close()
         self._alchemy_engine.dispose()
 
+    def get_current_role(self):
+        results = self.execute_simple('show roles;')
+        return [r for r in results if r['is_current'] == 'Y'][0]['name']
+
     def _create_engine(self, creds: dict, db, schema):
         global connection, alchemy_engine
 
