@@ -1,4 +1,1 @@
-from .connect import (
-    connect,
-    credsman_connect,
-)
+from .connect import SnowConn
