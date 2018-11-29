@@ -1,11 +1,16 @@
 # SnowflakeConnect
 
+This repository is a wrapper around the [snowflake SQLAlchemy](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html)
+library. It manages the creation of connections and provides a few convenience functions that should be good enough
+to cover most use cases yet be flexible enough to allow additional wrappers to be written around to serve more specific
+use cases for different teams. 
+
 ## Installation
 
 To install with pip execute:
 
 ```
-pip install -U git+ssh://git@github.com/Daltix/SnowflakeConnect.git@master#egg=snconn
+pip install -U git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn
 ```
 
 ## Connection
