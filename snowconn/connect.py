@@ -153,6 +153,17 @@ class SnowConn:
             raise e
         return cursor_list
 
+    def execute_file(self, fname):
+        """
+        Given the path to filename, execute the contents of the file using
+        self.execute_string
+        :param fname: filepath that can be open()ed
+        :return: list of cursors
+        """
+        with open(fname) as fh:
+            sql = fh.read()
+        return self.execute_string(sql)
+
     def read_df(self, sql):
         """
         Executes the sql passed in and reads the result into a pandas
