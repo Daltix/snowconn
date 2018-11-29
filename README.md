@@ -176,6 +176,18 @@ It takes one sql string as an argument and returns a dataframe.
 >>> 
 ```
 
+### write_df
+
+Use this to write a dataframe to Snowflake. This is a very thin wrapper around the pandas [DataFrame.to_sql()](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_sql.html) function.
+
+Unfortunately, it doesn't play nice with dictionaries and arrays so the use cases are quite limited. Hopefully
+we will improve upon this in the future.
+
+### close
+
+Use this to cleanly close all connections that have ever been associated with this instance of SnowConn. If you don't
+use this your process will hang for a while without saying anything before it actually exits.
+
 ## Accessing the connection objects directly
 
 These functions are mostly wrappers around 2 connection libraries:
