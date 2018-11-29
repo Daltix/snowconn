@@ -5,7 +5,7 @@
 To install with pip execute:
 
 ```
-pip install -U git+ssh://git@github.com/Daltix/SnowflakeConnect.git@master#egg=snconn
+pip install -U git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn
 ```
 
 ## Connection
