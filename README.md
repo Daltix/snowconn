@@ -165,8 +165,7 @@ if you want to use it you must satisfy this dependency yourself.
 It takes one sql string as an argument and returns a dataframe.
 
 ```bash
->>> from snconn import read_df
->>> read_df('select daltix_id, downloaded_on, price from price limit 5;')
+>>> conn.read_df('select daltix_id, downloaded_on, price from price limit 5;')
                                         daltix_id       downloaded_on  price
 0  0d3c30353035a6ab5747237a1f2600bbf5ddd27401372c 2018-11-18 00:00:01  37.99
 1  f5be8a5da3bde2da6a63fcad4e5c30823027324092234c 2018-11-18 00:00:02   9.99
