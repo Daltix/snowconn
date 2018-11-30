@@ -130,7 +130,7 @@ class SnowConn:
         return [
             {
                 key: json.loads(value)
-                if key in to_parse else value
+                if key in to_parse and value is not None else value
                 for key, value in entry.items()
             }
             for entry in results
