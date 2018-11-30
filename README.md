@@ -43,7 +43,7 @@ conn = SnowConn.connect()
 That's it you are connected! You can connect to a specific schema / database with the following:
 
 ```py
-conn = SnowConn.connect('pricing_prod', 'public')
+conn = SnowConn.connect('daltix_prod', 'public')
 ```
 
 ### (2) Connection using credsman
@@ -66,7 +66,7 @@ conn = SnowConn.credsman_connect('price_plotter')
 And you are connected! You can also pass the database and schema along
 
 ```py
-conn = SnowConn.credsman_connect('price_plotter', 'pricing_prod', 'public')
+conn = SnowConn.credsman_connect('price_plotter', 'daltix_prod', 'public')
 ```
 
 An example of a policy that gives access to the `price_plotter` looks like this:
@@ -119,7 +119,7 @@ Now that you're connected, there are a few low-level functions that you can use 
 the snowflake tables that you have access to.
 
 The rest of these examples assume that you have used one of the above methods to connect and have access to the
-`pricing_prod.public.price` table.
+`daltix_prod.public.price` table.
 
 ### execute_simple
 
