@@ -10,7 +10,7 @@ use cases for different teams.
 To install with pip execute:
 
 ```
-pip install -U git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn
+pip install git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn
 ```
 
 ## Connection
