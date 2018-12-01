@@ -5,9 +5,6 @@ from sqlalchemy import create_engine
 import snowflake.connector
 import configparser
 
-alchemy_engine = None
-connection = None
-
 
 class SnowConn:
 
@@ -21,7 +18,8 @@ class SnowConn:
         self._raw_connection = None
 
     @classmethod
-    def connect(cls, db: str='public', schema: str='public'):
+    def connect(cls, db: str='public', schema: str='public',
+                autocommit: bool=True):
         """
         Creates the SQLAlchemy engine object but does NOT create any
         connections to the database yet as that is done lazily.
@@ -31,12 +29,13 @@ class SnowConn:
         :return: None
         """
         conn = SnowConn()
-        conn._connect(db, schema)
+        conn._connect(db, schema, autocommit=autocommit)
         return conn
 
     @classmethod
     def credsman_connect(cls, credsman_name: str, db: str='public',
-                         schema: str='public', *args, **kwargs):
+                         schema: str='public', autocommit: bool=True,
+                         *args, **kwargs):
         """
         Fetch credentials from credsman and use it to create the SQLAlchemy
         engine instance that will be used for future connections. Note that
@@ -52,7 +51,8 @@ class SnowConn:
         :return:
         """
         conn = SnowConn()
-        conn._credsman_connect(credsman_name, db, schema, *args, **kwargs)
+        conn._credsman_connect(credsman_name, db, schema,
+                               autocommit=autocommit, *args, **kwargs)
         return conn
 
     def get_alchemy_engine(self):
@@ -74,7 +74,8 @@ class SnowConn:
         """
         return self._raw_connection
 
-    def _connect(self, db: str='public', schema: str='public'):
+    def _connect(self, db: str='public', schema: str='public',
+                 autocommit: bool=True):
         home = os.path.expanduser("~")
         snowsql_config = f'{home}/.snowsql/config'
 
@@ -94,13 +95,14 @@ class SnowConn:
             'PASSWORD': config['connections']['password'],
             'ROLE': config['connections']['rolename']
         }
-        self._create_engine(creds, db, schema)
+        self._create_engine(creds, db, schema, autocommit=autocommit)
 
     def _credsman_connect(self, credsman_name: str, db: str='public',
-                         schema: str='public', *args, **kwargs):
+                          schema: str='public', autocommit: bool=True,
+                          *args, **kwargs):
         sm = SecretManager(*args, **kwargs)
         creds = sm.get_secret(credsman_name)
-        self._create_engine(creds, db, schema)
+        self._create_engine(creds, db, schema, autocommit=autocommit)
 
     def execute_simple(self, sql: str):
         """
@@ -198,25 +200,21 @@ class SnowConn:
         df.to_sql(table, con=self._alchemy_engine,
                   if_exists=if_exists, index=index, chunksize=5000, **kwargs)
 
-    def close(self, commit=True):
+    def close(self):
         """
         Close off the current connection and dispose() of the engine
-        :param commit: executes a commit command that will make sure the most
-        recently executed statement is not rolled back. this behavior
         is not documented anywhere in snowflake.
         :return: None
         """
-        if commit:
-            self.execute_simple('commit;')
-        self._raw_connection.close()
+        self._connection.close()
         self._alchemy_engine.dispose()
 
     def get_current_role(self):
         results = self.execute_simple('show roles;')
         return [r for r in results if r['is_current'] == 'Y'][0]['name']
 
-    def _create_engine(self, creds: dict, db: str, schema: str):
-        global connection, alchemy_engine
+    def _create_engine(self, creds: dict, db: str, schema: str,
+                       autocommit: bool=True):
 
         username = creds['USERNAME']
         password = creds['PASSWORD']
@@ -226,10 +224,14 @@ class SnowConn:
             print(
                 'You may need to configure your account name to include the '
                 f'region. For example: {account}.eu-west-1')
-        conn = create_engine(
+        autocommit_portion = ''
+        if autocommit:
+            autocommit_portion = '&autocommit=true'
+        connection_string = (
             f'snowflake://{username}:{password}@{account}/{db}?role={role}&'
-            f'schema={schema}'
+            f'schema={schema}{autocommit_portion}'
         )
+        conn = create_engine(connection_string)
         self._alchemy_engine = conn
         self._connection = self._alchemy_engine.connect()
         self._raw_connection = self._connection.connection.connection
