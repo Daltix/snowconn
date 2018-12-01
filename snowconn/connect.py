@@ -198,12 +198,16 @@ class SnowConn:
         df.to_sql(table, con=self._alchemy_engine,
                   if_exists=if_exists, index=index, chunksize=5000, **kwargs)
 
-    def close(self):
+    def close(self, commit=True):
         """
         Close off the current connection and dispose() of the engine
+        :param commit: executes a commit command that will make sure the most
+        recently executed statement is not rolled back. this behavior
+        is not documented anywhere in snowflake.
         :return: None
         """
-        self._connection.close()
+        self.execute_simple('commit;')
+        self._raw_connection.close()
         self._alchemy_engine.dispose()
 
     def get_current_role(self):
