@@ -206,7 +206,8 @@ class SnowConn:
         is not documented anywhere in snowflake.
         :return: None
         """
-        self.execute_simple('commit;')
+        if commit:
+            self.execute_simple('commit;')
         self._raw_connection.close()
         self._alchemy_engine.dispose()
 
