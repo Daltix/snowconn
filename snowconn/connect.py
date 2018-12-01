@@ -102,7 +102,7 @@ class SnowConn:
         creds = sm.get_secret(credsman_name)
         self._create_engine(creds, db, schema)
 
-    def execute_simple(self, sql):
+    def execute_simple(self, sql: str):
         """
         Executes a single SQL statement, reads the result set into memory and
         returns an array of dictionaries. This method is for executing single
@@ -136,7 +136,7 @@ class SnowConn:
             for entry in results
         ]
 
-    def execute_string(self, sql, *args, **kwargs):
+    def execute_string(self, sql: str, *args, **kwargs):
         """
         Executes a list of sql statements. This is a thin wrapper around the
         snowflake connector execute_string() method found here:
@@ -153,25 +153,25 @@ class SnowConn:
             raise e
         return cursor_list
 
-    def execute_file(self, fname):
+    def execute_file(self, fname: str):
         """
         Given the path to filename, execute the contents of the file using
         self.execute_string
-        :param fname: filepath that can be open()ed
+        :param fname: file path that can be open()ed
         :return: list of cursors
         """
         with open(fname) as fh:
             sql = fh.read()
         return self.execute_string(sql)
 
-    def read_df(self, sql):
+    def read_df(self, sql: str):
         """
         Executes the sql passed in and reads the result into a pandas
         dataframe.
 
         If you want to use pandas, you'll have to install it yourself as it is
         not a requirement of this package due to its weight.
-        :param sql:
+        :param sql: string containing a single SQL statement
         :return: pandas DataFrame
         """
         try:
@@ -181,8 +181,8 @@ class SnowConn:
             raise e
         return pd.read_sql_query(sql, self._alchemy_engine)
 
-    def write_df(self, df, table: str, if_exists: str='replace', index=False,
-                 **kwargs):
+    def write_df(self, df, table: str, if_exists: str='replace',
+                 index: bool=False, **kwargs):
         """
         Writes a dataframe to the specified table. Note that you must be
         connected in the correct context for this to be able to work as you
@@ -210,7 +210,7 @@ class SnowConn:
         results = self.execute_simple('show roles;')
         return [r for r in results if r['is_current'] == 'Y'][0]['name']
 
-    def _create_engine(self, creds: dict, db, schema):
+    def _create_engine(self, creds: dict, db: str, schema: str):
         global connection, alchemy_engine
 
         username = creds['USERNAME']
