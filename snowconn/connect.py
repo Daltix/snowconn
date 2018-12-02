@@ -4,6 +4,8 @@ from credsman import SecretManager
 from sqlalchemy import create_engine
 import snowflake.connector
 import configparser
+from sqlalchemy.orm import sessionmaker
+
 
 
 class SnowConn:
@@ -206,7 +208,15 @@ class SnowConn:
         is not documented anywhere in snowflake.
         :return: None
         """
-        self._connection.close()
+        # there are some cases (even with autocommit=True) that calling close
+        # on the connection will invoke a rollback of some portion of things
+        # done during the connection. In order to keep the behavior as
+        # consistent as possible, we will avoid calling close() on the
+        # connection and instead let the engine dispose of the connection
+        # which is robust but has the unfortunate side effect of causing the
+        # process to hang for a bit before it is closed. that means that all
+        # users of snowflake_conn have a few second delay when the script exits
+        # self._connection.close()
         self._alchemy_engine.dispose()
 
     def get_current_role(self):
@@ -231,7 +241,7 @@ class SnowConn:
             f'snowflake://{username}:{password}@{account}/{db}?role={role}&'
             f'schema={schema}{autocommit_portion}'
         )
-        conn = create_engine(connection_string)
-        self._alchemy_engine = conn
+        engine = create_engine(connection_string)
+        self._alchemy_engine = engine
         self._connection = self._alchemy_engine.connect()
         self._raw_connection = self._connection.connection.connection
