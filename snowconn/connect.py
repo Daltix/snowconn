@@ -23,8 +23,8 @@ class SnowConn:
     def connect(cls, db: str='public', schema: str='public',
                 autocommit: bool=True):
         """
-        Creates the SQLAlchemy engine object but does NOT create any
-        connections to the database yet as that is done lazily.
+        Creates an engine and connection to the specified snowflake 
+        db using your snowsql credentials.
 
         :param db: the database name
         :param schema: the schema name
@@ -39,8 +39,7 @@ class SnowConn:
                          schema: str='public', autocommit: bool=True,
                          *args, **kwargs):
         """
-        Fetch credentials from credsman and use it to create the SQLAlchemy
-        engine instance that will be used for future connections. Note that
+        Creates an engine and connection to the specified snowflake db . Note that
         the context in which the process that is calling this method executes
         in must be authenticated to read the AWS Secret Manager secret with
         the provided name.
