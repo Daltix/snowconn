@@ -1,4 +1,4 @@
-# SnowflakeConnect
+# SnowConn
 
 This repository is a wrapper around the [snowflake SQLAlchemy](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html)
 library. It manages the creation of connections and provides a few convenience functions that should be good enough
