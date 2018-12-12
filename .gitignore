@@ -105,4 +105,3 @@ venv.bak/
 config.ini
 .idea
 configs/secrets.py
-test.py
