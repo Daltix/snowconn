@@ -10,6 +10,7 @@ setup(
     author_email='sam@daredata.engineering',
     packages=['snowconn'],
     install_requires=[
+        'wheel',
         'snowflake-sqlalchemy',
     ]
 )
