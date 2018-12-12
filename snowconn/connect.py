@@ -4,8 +4,6 @@ from credsman import SecretManager
 from sqlalchemy import create_engine
 import snowflake.connector
 import configparser
-from sqlalchemy.orm import sessionmaker
-
 
 
 class SnowConn:
@@ -185,21 +183,39 @@ class SnowConn:
         return pd.read_sql_query(sql, self._alchemy_engine)
 
     def write_df(self, df, table: str, if_exists: str='replace',
-                 index: bool=False, **kwargs):
+                 index: bool=False, temporary_table=False,
+                 chunksize=5000, **kwargs):
         """
         Writes a dataframe to the specified table. Note that you must be
         connected in the correct context for this to be able to work as you
         cannot specify the fully namespaced version of the table.
 
+        There reason that we have so many params explicit in this function
+        is because we want to change their defaults to something more sensible
+        for daltix.
+
         :param df: pandas dataframe to write to the table
         :param table: the name of ONLY the table
         :param if_exists: forwarded on to DataFrame.to_sql
         :param index: forwarded on to DataFrame.to_sql
+        :param temporary_table: Runs a bit of a hack to create temp tables
+        :param chunksize: forwarded on to DataFrame.to_sql
         :param kwargs: forwarded on to DataFrame.to_sql
         :return: None
         """
-        df.to_sql(table, con=self._alchemy_engine,
-                  if_exists=if_exists, index=index, chunksize=5000, **kwargs)
+        if not temporary_table:
+            df.to_sql(table, con=self._connection,
+                      if_exists=if_exists, index=index, chunksize=chunksize,
+                      **kwargs)
+        else:
+            import pandas as pd
+            sql = pd.io.sql.get_schema(
+                df, name=table, con=self._connection
+            ).replace("CREATE TABLE", "CREATE OR REPLACE TEMPORARY TABLE")
+            self.execute_simple(sql)
+            df.to_sql(table, con=self._connection,
+                      if_exists='append', index=index, chunksize=chunksize,
+                      **kwargs)
 
     def close(self):
         """
