@@ -19,23 +19,25 @@ class SnowConn:
 
     @classmethod
     def connect(cls, db: str='public', schema: str='public',
-                autocommit: bool=True):
+                autocommit: bool=True, role=None):
         """
         Creates an engine and connection to the specified snowflake 
         db using your snowsql credentials.
 
         :param db: the database name
         :param schema: the schema name
+        :param autocommit: check sqlalchemy for autocommit behavior
+        :param role: override the default role for this user
         :return: None
         """
         conn = SnowConn()
-        conn._connect(db, schema, autocommit=autocommit)
+        conn._connect(db, schema, autocommit=autocommit, role=role)
         return conn
 
     @classmethod
     def credsman_connect(cls, credsman_name: str, db: str='public',
                          schema: str='public', autocommit: bool=True,
-                         *args, **kwargs):
+                         role: str=None, *args, **kwargs):
         """
         Creates an engine and connection to the specified snowflake db . Note that
         the context in which the process that is calling this method executes
@@ -45,13 +47,16 @@ class SnowConn:
         :param credsman_name: the named of the AWS Secrets Manager secret
         :param db: the database name
         :param schema: the schema name
+        :param autocommit: check sqlalchemy for autocommit behavior
+        :param role: override the default role for this user
         :param args: forwarded to credsman
         :param kwargs: forwarded to credsman
         :return:
         """
         conn = SnowConn()
         conn._credsman_connect(credsman_name, db, schema,
-                               autocommit=autocommit, *args, **kwargs)
+                               autocommit=autocommit, role=role,
+                               *args, **kwargs)
         return conn
 
     def get_alchemy_engine(self):
@@ -74,7 +79,7 @@ class SnowConn:
         return self._raw_connection
 
     def _connect(self, db: str='public', schema: str='public',
-                 autocommit: bool=True):
+                 autocommit: bool=True, role: str=None):
         home = os.path.expanduser("~")
         snowsql_config = f'{home}/.snowsql/config'
 
@@ -94,14 +99,16 @@ class SnowConn:
             'PASSWORD': config['connections']['password'],
             'ROLE': config['connections']['rolename']
         }
-        self._create_engine(creds, db, schema, autocommit=autocommit)
+        self._create_engine(
+            creds, db, schema, autocommit=autocommit, role=role)
 
     def _credsman_connect(self, credsman_name: str, db: str='public',
                           schema: str='public', autocommit: bool=True,
-                          *args, **kwargs):
+                          role=None, *args, **kwargs):
         sm = SecretManager(*args, **kwargs)
         creds = sm.get_secret(credsman_name)
-        self._create_engine(creds, db, schema, autocommit=autocommit)
+        self._create_engine(
+            creds, db, schema, autocommit=autocommit, role=role)
 
     def execute_simple(self, sql: str):
         """
@@ -239,8 +246,9 @@ class SnowConn:
         return [r for r in results if r['is_current'] == 'Y'][0]['name']
 
     def _create_engine(self, creds: dict, db: str, schema: str,
-                       autocommit: bool=True):
-
+                       autocommit: bool=True, role: str=None):
+        if role is not None:
+            creds['ROLE'] = role
         username = creds['USERNAME']
         password = creds['PASSWORD']
         account = creds['ACCOUNT']
