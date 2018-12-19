@@ -182,6 +182,10 @@ Use this to write a dataframe to Snowflake. This is a very thin wrapper around t
 Unfortunately, it doesn't play nice with dictionaries and arrays so the use cases are quite limited. Hopefully
 we will improve upon this in the future.
 
+### get_current_role
+
+Returns the current role.
+
 ### close
 
 Use this to cleanly close all connections that have ever been associated with this instance of SnowConn. If you don't
