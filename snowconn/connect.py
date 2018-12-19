@@ -187,7 +187,7 @@ class SnowConn:
         except ImportError as e:
             print('pandas not installed, cannot execute read_df')
             raise e
-        return pd.read_sql_query(sql, self._alchemy_engine)
+        return pd.read_sql_query(sql, self._connection)
 
     def write_df(self, df, table: str, if_exists: str='replace',
                  index: bool=False, temporary_table=False,
