@@ -51,7 +51,7 @@ conn = SnowConn.connect('daltix_prod', 'public')
 You need to have credsman installed which you can do so with the following:
 
 ```
-pip install git+ssh://git@github.com/Daltix/full-stack-team.git@develop#egg=credsman&subdirectory=credsman
+pip install 'git+ssh://git@github.com/Daltix/full-stack-team.git@develop#egg=credsman&subdirectory=credsman'
 ```
 
 Now you must know the name of the secret that you want to use. You can find the list of them in the athena account [here](https://eu-west-1.console.aws.amazon.com/secretsmanager/home?region=eu-west-1#/listSecrets) For this example, we will assume the `price_plotter` is the secret manager that we will be using. 
