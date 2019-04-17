@@ -31,7 +31,6 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install --upgrade pip setuptools wheel twine
-            pip install twine
             python setup.py sdist
 
       - run:
