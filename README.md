@@ -30,7 +30,7 @@ by then executing `snowsql` from the command line.
 *WARNING* Be sure to configure your account name like the following:
 
 ```
-accountname = ***REMOVED***.eu-west-1
+accountname = eq94734.eu-west-1
 ```
 
 If you don't include the `eu-west-1` part, it will hang for about a minute and then give you a permission denied.
