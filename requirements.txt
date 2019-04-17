@@ -1,2 +1,1 @@
 snowflake-sqlalchemy
-git+ssh://git@github.com/Daltix/full-stack-team.git@develop#egg=credsman&subdirectory=credsman
