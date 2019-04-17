@@ -7,10 +7,16 @@ use cases for different teams.
 
 ## Installation
 
-To install with pip execute:
+To install latest version released to pypi with pip:
 
+```bash
+pip install snowconn
 ```
-pip install git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn
+
+To install the latest version directly from the repo:
+
+```bash
+pip install 'git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn'
 ```
 
 ## Connection
