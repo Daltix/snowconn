@@ -1,8 +1,17 @@
 from setuptools import setup
+from os import path
+
+
+this_directory = path.abspath(path.dirname(__file__))
+readme_path = path.join(this_directory, 'README.md')
+
+with open(readme_path, encoding='utf-8') as fh:
+    long_description = fh.read()
+
 
 setup(
     name='snowconn',
-    version='3.5.1',
+    version='3.5.2',
     description='Python utilities for connection to Daltix snowflake data '
                 'source',
     # url='TODO',
@@ -12,5 +21,7 @@ setup(
     install_requires=[
         'wheel==0.32.3',
         'snowflake-sqlalchemy==1.1.4',
-    ]
+    ],
+    long_description=long_description,
+    long_description_type='text/markdown',
 )
