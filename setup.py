@@ -11,7 +11,7 @@ with open(readme_path, encoding='utf-8') as fh:
 
 setup(
     name='snowconn',
-    version='3.5.2',
+    version='3.5.3',
     description='Python utilities for connection to Daltix snowflake data '
                 'source',
     # url='TODO',
@@ -23,5 +23,5 @@ setup(
         'snowflake-sqlalchemy==1.1.4',
     ],
     long_description=long_description,
-    long_description_type='text/markdown',
+    long_description_content_type='text/markdown',
 )
