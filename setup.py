@@ -11,10 +11,10 @@ with open(readme_path, encoding='utf-8') as fh:
 
 setup(
     name='snowconn',
-    version='3.5.3',
+    version='3.5.4',
     description='Python utilities for connection to Daltix snowflake data '
                 'source',
-    # url='TODO',
+    url='https://github.com/Daltix/snowconn',
     author='Sam Hopkins',
     author_email='sam@daredata.engineering',
     packages=['snowconn'],
