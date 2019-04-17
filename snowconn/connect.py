@@ -1,10 +1,14 @@
 import os
 import json
-from credsman import SecretManager
 from sqlalchemy import create_engine
 import snowflake.connector
 import configparser
 
+try:
+    import boto3
+except ImportError as e:
+    print('Cannot import boto3, if you want to use credsman_connect, please'
+          ' ensure that boto3 is installed')
 
 class SnowConn:
 
@@ -37,26 +41,38 @@ class SnowConn:
     @classmethod
     def credsman_connect(cls, credsman_name: str, db: str='public',
                          schema: str='public', autocommit: bool=True,
-                         role: str=None, *args, **kwargs):
+                         role: str=None, region_name="eu-west-1",
+                         aws_access_key_id=None, aws_secret_access_key=None):
         """
         Creates an engine and connection to the specified snowflake db . Note that
         the context in which the process that is calling this method executes
         in must be authenticated to read the AWS Secret Manager secret with
         the provided name.
 
+        Assumes that you are using the AWS secrets manager stored as a json
+        object that will parsing json.loads and used like the following:
+
+        username = creds['USERNAME']
+        password = creds['PASSWORD']
+        account = creds['ACCOUNT']
+        role = creds['ROLE']
+
         :param credsman_name: the named of the AWS Secrets Manager secret
         :param db: the database name
         :param schema: the schema name
         :param autocommit: check sqlalchemy for autocommit behavior
         :param role: override the default role for this user
-        :param args: forwarded to credsman
-        :param kwargs: forwarded to credsman
+        :param region_name: forwarded to boto3
+        :param aws_access_key_id: forwarded to boto3
+        :param aws_secret_access_key: forwarded to boto3
         :return:
         """
         conn = SnowConn()
-        conn._credsman_connect(credsman_name, db, schema,
-                               autocommit=autocommit, role=role,
-                               *args, **kwargs)
+        conn._credsman_connect(
+            credsman_name, db, schema, autocommit=autocommit, role=role,
+            region_name=region_name, aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
         return conn
 
     def get_alchemy_engine(self):
@@ -104,9 +120,27 @@ class SnowConn:
 
     def _credsman_connect(self, credsman_name: str, db: str='public',
                           schema: str='public', autocommit: bool=True,
-                          role=None, *args, **kwargs):
-        sm = SecretManager(*args, **kwargs)
-        creds = sm.get_secret(credsman_name)
+                          role=None, region_name="eu-west-1",
+                          aws_access_key_id=None, aws_secret_access_key=None):
+        if aws_access_key_id and aws_secret_access_key:
+            # Start a session with boto, ensure to pass our credentials.
+            session = boto3.session.Session(
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key
+            )
+        else:
+            # Start a session using the default boto3 behavior
+            session = boto3.session.Session()
+
+        client = session.client(
+            service_name='secretsmanager',
+            region_name=region_name,
+            endpoint_url=f'https://secretsmanager.{region_name}.amazonaws.com'
+        )
+        get_secret_value_response = client.get_secret_value(
+            SecretId=credsman_name
+        )
+        creds = json.loads(get_secret_value_response['SecretString'])
         self._create_engine(
             creds, db, schema, autocommit=autocommit, role=role)
 

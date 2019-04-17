@@ -30,7 +30,7 @@ by then executing `snowsql` from the command line.
 *WARNING* Be sure to configure your account name like the following:
 
 ```
-accountname = ***REMOVED***.eu-west-1
+accountname = eq94734.eu-west-1
 ```
 
 If you don't include the `eu-west-1` part, it will hang for about a minute and then give you a permission denied.
@@ -48,13 +48,22 @@ conn = SnowConn.connect('daltix_prod', 'public')
 
 ### (2) Connection using credsman
 
-You need to have credsman installed which you can do so with the following:
+You need to have boto3 installed which you can do so with the following:
 
 ```
-pip install 'git+ssh://git@github.com/Daltix/full-stack-team.git@develop#egg=credsman&subdirectory=credsman'
+pip install boto3
 ```
 
-Now you must know the name of the secret that you want to use. You can find the list of them in the athena account [here](https://eu-west-1.console.aws.amazon.com/secretsmanager/home?region=eu-west-1#/listSecrets) For this example, we will assume the `price_plotter` is the secret manager that we will be using. 
+Now you must satisfy the folloing requirements:
+
+1. Have a secret stored in an accessable aws account
+1. The secret must have the following keys:
+    - `USERNAME`
+    - `PASSWORD`
+    - `ACCOUNT`
+    - `ROLE`
+
+For this example, we will assume the `price_plotter` is the secret manager that we will be using. 
 
 Now that you know the name of the secret, you MUST be sure that the context in which it is running has access to read
 that secret. Once this is done, you can now execute the following code:
@@ -84,13 +93,7 @@ An example of a policy that gives access to the `price_plotter` looks like this:
                 "secretsmanager:DescribeSecret",
                 "secretsmanager:ListSecretVersionIds"
             ],
-            "Resource": "arn:aws:secretsmanager:eu-west-1:***REMOVED***:secret:price_plotter-***REMOVED***"
-        },
-        {
-            "Sid": "VisualEditor1",
-            "Effect": "Allow",
-            "Action": "secretsmanager:GetRandomPassword",
-            "Resource": "*"
+            "Resource": "arn:aws:secretsmanager:eu-west-1:<your-account-number>:secret:price_plotter-AdcNpp"
         }
     ]
 }
