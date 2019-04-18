@@ -11,12 +11,12 @@ with open(readme_path, encoding='utf-8') as fh:
 
 setup(
     name='snowconn',
-    version='3.5.5',
+    version='3.5.6',
     description='Python utilities for connection to the Snowflake data '
                 'warehouse',
     url='https://github.com/Daltix/snowconn',
-    author='Sam Hopkins',
-    author_email='sam@daredata.engineering',
+    author='Daltix NV',
+    author_email='snowconn@daltix.com',
     packages=['snowconn'],
     install_requires=[
         'wheel==0.32.3',
