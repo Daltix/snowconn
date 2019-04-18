@@ -137,7 +137,7 @@ takes a single argument which a string of the SQL statement that you with to exe
 
 ```py
 >>> conn.execute_simple('select * from price limit 1;')
-[{'DALTIX_ID': '0d3c30353035a6ab5747237a1f2600bbf5ddd27401372c5effe0f2790a88ad56', 'SHOP': 'zooplus', 'COUNTRY': 'be', 'PRODUCT_ID': '616846.0', 'LOCATION': 'base', 'PRICE': 37.99, 'PROMO_PRICE': None, 'PRICE_STD': None, 'PROMO_PRICE_STD': None, 'UNIT': None, 'UNIT_STD': None, 'IS_MAIN': True, 'TAX_INCLUDED': True, 'CURRENCY': 'eur', 'VENDOR': None, 'VENDOR_STD': None, 'DOWNLOADED_ON': datetime.datetime(2018, 11, 18, 0, 0, 1), 'DOWNLOADED_ON_LOCAL': datetime.datetime(2018, 11, 18, 1, 0, 1), 'DOWNLOADED_ON_DATE': datetime.date(2018, 11, 18), 'IS_LATEST_PRICE': False}]
+[{'DALTIX_ID': '0d3c30353035a6ab5747237a1f2600bbf5ddd27401372c5effe0f2790a88ad56', 'SHOP': 'ahed', 'COUNTRY': 'de', 'PRODUCT_ID': '616846.0', 'LOCATION': 'base', 'PRICE': 37.99, 'PROMO_PRICE': None, 'PRICE_STD': None, 'PROMO_PRICE_STD': None, 'UNIT': None, 'UNIT_STD': None, 'IS_MAIN': True, 'VENDOR': None, 'VENDOR_STD': None, 'DOWNLOADED_ON': datetime.datetime(2018, 11, 18, 0, 0, 1), 'DOWNLOADED_ON_LOCAL': datetime.datetime(2018, 11, 18, 1, 0, 1), 'DOWNLOADED_ON_DATE': datetime.date(2018, 11, 18), 'IS_LATEST_PRICE': False}]
 ```
 
 ### execute_string
