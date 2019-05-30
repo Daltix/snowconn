@@ -52,7 +52,7 @@ That's it you are connected! You can connect to a specific schema / database wit
 conn = SnowConn.connect('daltix_prod', 'public')
 ```
 
-### (2) Connection using credsman
+### (2) Connection using aws secrets manager
 
 You need to have boto3 installed which you can do so with the following:
 
