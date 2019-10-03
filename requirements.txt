@@ -1,1 +1,1 @@
-snowflake-sqlalchemy
+git+https://github.com/Daltix/snowflake-sqlalchemy.git@#egg=snowflake-sqlalchemy
