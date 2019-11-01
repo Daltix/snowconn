@@ -20,7 +20,7 @@ setup(
     packages=['snowconn'],
     install_requires=[
         'wheel==0.32.3',
-        'snowflake-sqlalchemy==1.1.14',
+        'snowflake-sqlalchemy @ https://github.com/Daltix/snowflake-sqlalchemy/archive/master.zip'
     ],
     long_description=long_description,
     long_description_content_type='text/markdown',
