@@ -272,7 +272,14 @@ class SnowConn:
         # which is robust but has the unfortunate side effect of causing the
         # process to hang for a bit before it is closed. that means that all
         # users of snowflake_conn have a few second delay when the script exits
-        # self._connection.close()
+        
+        # Update: I've been experimenting with my own version of this with the
+        # following line uncommented and have not noticed any issues. I'm
+        # thinking that the issue described above isn't a problem any more.
+        # Furthermote, bringing back this line of code stops the connection
+        # from hanging in some cases where an exception is thrown during
+        # or right after a query.
+        self._connection.close()
         self._alchemy_engine.dispose()
 
     def get_current_role(self):
