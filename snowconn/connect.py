@@ -10,8 +10,8 @@ except ImportError as e:
     print('Cannot import boto3, if you want to use credsman_connect, please'
           ' ensure that boto3 is installed')
 
-class SnowConn:
 
+class SnowConn:
     _alchemy_engine = None
     _connection = None
     _raw_connection = None
@@ -22,8 +22,8 @@ class SnowConn:
         self._raw_connection = None
 
     @classmethod
-    def connect(cls, db: str='public', schema: str='public',
-                autocommit: bool=True, role=None):
+    def connect(cls, db: str = 'public', schema: str = 'public',
+                autocommit: bool = True, role=None):
         """
         Creates an engine and connection to the specified snowflake 
         db using your snowsql credentials.
@@ -39,9 +39,9 @@ class SnowConn:
         return conn
 
     @classmethod
-    def credsman_connect(cls, credsman_name: str, db: str='public',
-                         schema: str='public', autocommit: bool=True,
-                         role: str=None, region_name="eu-west-1",
+    def credsman_connect(cls, credsman_name: str, db: str = 'public',
+                         schema: str = 'public', autocommit: bool = True,
+                         role: str = None, region_name="eu-west-1",
                          aws_access_key_id=None, aws_secret_access_key=None):
         """
         Creates an engine and connection to the specified snowflake db . Note that
@@ -94,8 +94,8 @@ class SnowConn:
         """
         return self._raw_connection
 
-    def _connect(self, db: str='public', schema: str='public',
-                 autocommit: bool=True, role: str=None):
+    def _connect(self, db: str = 'public', schema: str = 'public',
+                 autocommit: bool = True, role: str = None):
         home = os.path.expanduser("~")
         snowsql_config = f'{home}/.snowsql/config'
 
@@ -118,8 +118,8 @@ class SnowConn:
         self._create_engine(
             creds, db, schema, autocommit=autocommit, role=role)
 
-    def _credsman_connect(self, credsman_name: str, db: str='public',
-                          schema: str='public', autocommit: bool=True,
+    def _credsman_connect(self, credsman_name: str, db: str = 'public',
+                          schema: str = 'public', autocommit: bool = True,
                           role=None, region_name="eu-west-1",
                           aws_access_key_id=None, aws_secret_access_key=None):
         if aws_access_key_id and aws_secret_access_key:
@@ -223,8 +223,8 @@ class SnowConn:
             raise e
         return pd.read_sql_query(sql, self._connection)
 
-    def write_df(self, df, table: str, if_exists: str='replace',
-                 index: bool=False, temporary_table=False,
+    def write_df(self, df, table: str, if_exists: str = 'replace',
+                 index: bool = False, temporary_table=False,
                  chunksize=5000, **kwargs):
         """
         Writes a dataframe to the specified table. Note that you must be
@@ -272,7 +272,7 @@ class SnowConn:
         # which is robust but has the unfortunate side effect of causing the
         # process to hang for a bit before it is closed. that means that all
         # users of snowflake_conn have a few second delay when the script exits
-        
+
         # Update: I've been experimenting with my own version of this with the
         # following line uncommented and have not noticed any issues. I'm
         # thinking that the issue described above isn't a problem any more.
@@ -287,7 +287,7 @@ class SnowConn:
         return [r for r in results if r['is_current'] == 'Y'][0]['name']
 
     def _create_engine(self, creds: dict, db: str, schema: str,
-                       autocommit: bool=True, role: str=None):
+                       autocommit: bool = True, role: str = None):
         if role is not None:
             creds['ROLE'] = role
         username = creds['USERNAME']
