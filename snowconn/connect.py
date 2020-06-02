@@ -23,7 +23,7 @@ class SnowConn:
 
     @classmethod
     def connect(cls, db: str = 'public', schema: str = 'public',
-                autocommit: bool = True, role=None):
+                autocommit: bool = True, role=None, warehouse=None):
         """
         Creates an engine and connection to the specified snowflake 
         db using your snowsql credentials.
@@ -35,14 +35,16 @@ class SnowConn:
         :return: None
         """
         conn = SnowConn()
-        conn._connect(db, schema, autocommit=autocommit, role=role)
+        conn._connect(
+            db, schema, autocommit=autocommit, role=role, warehouse=warehouse)
         return conn
 
     @classmethod
     def credsman_connect(cls, credsman_name: str, db: str = 'public',
                          schema: str = 'public', autocommit: bool = True,
                          role: str = None, region_name="eu-west-1",
-                         aws_access_key_id=None, aws_secret_access_key=None):
+                         aws_access_key_id=None, aws_secret_access_key=None,
+                         warehouse=None):
         """
         Creates an engine and connection to the specified snowflake db . Note that
         the context in which the process that is calling this method executes
@@ -71,7 +73,7 @@ class SnowConn:
         conn._credsman_connect(
             credsman_name, db, schema, autocommit=autocommit, role=role,
             region_name=region_name, aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
+            aws_secret_access_key=aws_secret_access_key, warehouse=warehouse
         )
         return conn
 
@@ -95,7 +97,7 @@ class SnowConn:
         return self._raw_connection
 
     def _connect(self, db: str = 'public', schema: str = 'public',
-                 autocommit: bool = True, role: str = None):
+                 autocommit: bool = True, role: str = None, warehouse=None):
         home = os.path.expanduser("~")
         snowsql_config = f'{home}/.snowsql/config'
 
@@ -116,12 +118,14 @@ class SnowConn:
             'ROLE': config['connections']['rolename']
         }
         self._create_engine(
-            creds, db, schema, autocommit=autocommit, role=role)
+            creds, db, schema, autocommit=autocommit, role=role,
+            warehouse=warehouse)
 
     def _credsman_connect(self, credsman_name: str, db: str = 'public',
                           schema: str = 'public', autocommit: bool = True,
                           role=None, region_name="eu-west-1",
-                          aws_access_key_id=None, aws_secret_access_key=None):
+                          aws_access_key_id=None, aws_secret_access_key=None,
+                          warehouse=None):
         if aws_access_key_id and aws_secret_access_key:
             # Start a session with boto, ensure to pass our credentials.
             session = boto3.session.Session(
@@ -142,7 +146,8 @@ class SnowConn:
         )
         creds = json.loads(get_secret_value_response['SecretString'])
         self._create_engine(
-            creds, db, schema, autocommit=autocommit, role=role)
+            creds, db, schema, autocommit=autocommit, role=role,
+            warehouse=warehouse)
 
     def execute_simple(self, sql: str):
         """
@@ -287,7 +292,8 @@ class SnowConn:
         return [r for r in results if r['is_current'] == 'Y'][0]['name']
 
     def _create_engine(self, creds: dict, db: str, schema: str,
-                       autocommit: bool = True, role: str = None):
+                       autocommit: bool = True, role: str = None,
+                       warehouse=None):
         if role is not None:
             creds['ROLE'] = role
         username = creds['USERNAME']
@@ -299,11 +305,14 @@ class SnowConn:
                 'You may need to configure your account name to include the '
                 f'region. For example: {account}.eu-west-1')
         autocommit_portion = ''
+        warehouse_portion = ''
         if autocommit:
             autocommit_portion = '&autocommit=true'
+        if warehouse:
+            warehouse_portion = f'&warehouse={warehouse}'
         connection_string = (
             f'snowflake://{username}:{password}@{account}/{db}?role={role}&'
-            f'schema={schema}{autocommit_portion}'
+            f'schema={schema}{autocommit_portion}{warehouse_portion}'
         )
         engine = create_engine(connection_string)
         self._alchemy_engine = engine
