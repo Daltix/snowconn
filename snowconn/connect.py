@@ -228,7 +228,7 @@ class SnowConn:
             raise e
         return pd.read_sql_query(sql, self._connection)
 
-    def write_df(self, df, table: str, if_exists: str = 'replace',
+    def write_df(self, df, table: str, schema=None, if_exists: str = 'replace',
                  index: bool = False, temporary_table=False,
                  chunksize=5000, **kwargs):
         """
@@ -249,19 +249,28 @@ class SnowConn:
         :param kwargs: forwarded on to DataFrame.to_sql
         :return: None
         """
+
         if not temporary_table:
             df.to_sql(table, con=self._connection,
                       if_exists=if_exists, index=index, chunksize=chunksize,
                       **kwargs)
         else:
             import pandas as pd
+
+            if schema:
+                create_temporary_clause = 'CREATE OR REPLACE TEMPORARY TABLE {SCHEMA}.'.format(SCHEMA=schema)
+            else:
+                create_temporary_clause = 'CREATE OR REPLACE TEMPORARY TABLE'
+
             sql = pd.io.sql.get_schema(
                 df, name=table, con=self._connection
-            ).replace("CREATE TABLE", "CREATE OR REPLACE TEMPORARY TABLE")
+            ).replace('CREATE TABLE', create_temporary_clause)
             self.execute_simple(sql)
             df.to_sql(table, con=self._connection,
                       if_exists='append', index=index, chunksize=chunksize,
                       **kwargs)
+
+
 
     def close(self):
         """
