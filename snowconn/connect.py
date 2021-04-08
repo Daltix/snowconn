@@ -126,7 +126,7 @@ class SnowConn:
                           schema: str = 'public', autocommit: bool = True,
                           role=None, region_name="eu-west-1",
                           aws_access_key_id=None, aws_secret_access_key=None,
-                          warehouse=None):
+                          warehouse=None, fallback_to_local_creds=False):
         if aws_access_key_id and aws_secret_access_key:
             # Start a session with boto, ensure to pass our credentials.
             session = boto3.session.Session(
@@ -148,7 +148,7 @@ class SnowConn:
                 SecretId=credsman_name
             )
         except botocore.exceptions.ClientError as error:
-            if error.response['Error']['Code'] == 'AccessDeniedException':
+            if fallback_to_local_creds and error.response['Error']['Code'] == 'AccessDeniedException':
                 # Fallback to local Snowflake credentials
                 print('WARNING: Failed to fetch secret for credsman:', credsman_name,
                     '\nFalling back to local Snowflake credentials.')
