@@ -6,6 +6,7 @@ import configparser
 
 try:
     import boto3
+    import botocore
 except ImportError as e:
     print('Cannot import boto3, if you want to use credsman_connect, please'
           ' ensure that boto3 is installed')
@@ -141,9 +142,27 @@ class SnowConn:
             region_name=region_name,
             endpoint_url=f'https://secretsmanager.{region_name}.amazonaws.com'
         )
-        get_secret_value_response = client.get_secret_value(
-            SecretId=credsman_name
-        )
+
+        try:
+            get_secret_value_response = client.get_secret_value(
+                SecretId=credsman_name
+            )
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == 'AccessDeniedException':
+                # Fallback to local Snowflake credentials
+                print('WARNING: Failed to fetch secret for credsman:', credsman_name,
+                    '\nFalling back to local Snowflake credentials.')
+                self._connect(
+                    db,
+                    schema,
+                    autocommit,
+                    role,
+                    warehouse
+                )
+                return
+            else:
+                raise error
+
         creds = json.loads(get_secret_value_response['SecretString'])
         self._create_engine(
             creds, db, schema, autocommit=autocommit, role=role,
