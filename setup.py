@@ -20,7 +20,7 @@ setup(
     packages=['snowconn'],
     install_requires=[
         'wheel==0.32.3',
-        'snowflake-sqlalchemy==1.2.3',
+        'snowflake-sqlalchemy==1.2.4',
     ],
     long_description=long_description,
     long_description_content_type='text/markdown',
