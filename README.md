@@ -234,7 +234,9 @@ You can see the object documentation [here](https://docs.snowflake.net/manuals/u
 
 ## Known issues
 
-There is a bug with `snowflake-connector` which causes some connections to Snowflake to not close properly in certain circumstances. The recommended way to use Snowflake is to wrap the reading in a `try/finally` block, like this:
+There is a bug with `snowflake-connector` which causes some connections to Snowflake to not close properly in certain circumstances. This can cause timeout errors.
+
+The recommended way to use Snowflake is to wrap the reading in a `try/finally` block to ensure the connection is explicitly closed, like this:
 ```
 from snowconn import SnowConn
 conn = SnowConn.credsman_connect(...) # or SnowConn.connect()
@@ -242,3 +244,4 @@ try:
     result = execute_string(query) # or result = read_df(query), etc
 finally:
     conn.close()
+```
