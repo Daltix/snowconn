@@ -21,6 +21,15 @@ class SnowConn:
         self._alchemy_engine = None
         self._connection = None
         self._raw_connection = None
+    
+    # syntax for enter and exit methods adapted from:
+    # https://stackoverflow.com/questions/865115/how-do-i-correctly-clean-up-a-python-object
+    # official documentation: https://www.python.org/dev/peps/pep-0343/#specification-the-with-statement
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
     @classmethod
     def connect(cls, db: str = 'public', schema: str = 'public',
@@ -45,7 +54,7 @@ class SnowConn:
                          schema: str = 'public', autocommit: bool = True,
                          role: str = None, region_name="eu-west-1",
                          aws_access_key_id=None, aws_secret_access_key=None,
-                         warehouse=None):
+                         warehouse=None, fallback_to_local_creds=False):
         """
         Creates an engine and connection to the specified snowflake db . Note that
         the context in which the process that is calling this method executes
@@ -74,7 +83,8 @@ class SnowConn:
         conn._credsman_connect(
             credsman_name, db, schema, autocommit=autocommit, role=role,
             region_name=region_name, aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key, warehouse=warehouse
+            aws_secret_access_key=aws_secret_access_key, warehouse=warehouse,
+            fallback_to_local_creds=fallback_to_local_creds
         )
         return conn
 
@@ -150,8 +160,9 @@ class SnowConn:
         except botocore.exceptions.ClientError as error:
             if fallback_to_local_creds and error.response['Error']['Code'] == 'AccessDeniedException':
                 # Fallback to local Snowflake credentials
-                print('WARNING: Failed to fetch secret for credsman:', credsman_name,
-                    '\nFalling back to local Snowflake credentials.')
+                print('WARNING: You do not have permissions to fetch secret for credsman:', credsman_name,
+                    '\nFalling back to local Snowflake credentials.',
+                    '\nRemember to check your mobile device!')
                 self._connect(
                     db,
                     schema,

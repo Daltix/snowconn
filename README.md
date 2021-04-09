@@ -236,7 +236,7 @@ You can see the object documentation [here](https://docs.snowflake.net/manuals/u
 
 There is a bug with `snowflake-connector` which causes some connections to Snowflake to not close properly in certain circumstances. This can cause timeout errors.
 
-The recommended way to use Snowflake is to wrap the reading in a `try/finally` block to ensure the connection is explicitly closed, like this:
+You can handle this in two ways: the first is to wrap usage of the connection in a `try/finally` block to ensure the connection is explicitly closed, like this:
 ```
 from snowconn import SnowConn
 conn = SnowConn.credsman_connect(...) # or SnowConn.connect()
@@ -245,3 +245,5 @@ try:
 finally:
     conn.close()
 ```
+
+The second way is to us 
