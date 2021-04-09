@@ -246,4 +246,8 @@ finally:
     conn.close()
 ```
 
-The second way is to us 
+The second way is to use SnowConn with the `with` syntax, as follows:
+```
+with SnowConn.connect() as conn:
+    conn.read_df(...)
+```
