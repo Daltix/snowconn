@@ -231,3 +231,14 @@ This returns the result of the creating the sqlalchemy engine and then calling `
 of `get_alchemy_engine` this represents an active connection to Snowflake and this has a session associated with it.
 
 You can see the object documentation [here](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html#parameters-and-behavior)
+
+## Known issues
+
+There is a bug with `snowflake-connector` which causes some connections to Snowflake to not close properly in certain circumstances. The recommended way to use Snowflake is to wrap the reading in a `try/finally` block, like this:
+```
+from snowconn import SnowConn
+conn = SnowConn.credsman_connect(...) # or SnowConn.connect()
+try:
+    result = execute_string(query) # or result = read_df(query), etc
+finally:
+    conn.close()
