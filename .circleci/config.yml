@@ -29,7 +29,8 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install --upgrade pip setuptools wheel twine
+            pip install --upgrade pip
+            pip install --upgrade setuptools wheel twine
             python setup.py sdist
 
       - run:
