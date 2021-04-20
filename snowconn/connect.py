@@ -21,72 +21,177 @@ class SnowConn:
         self._alchemy_engine = None
         self._connection = None
         self._raw_connection = None
-    
-    # syntax for enter and exit methods adapted from:
-    # https://stackoverflow.com/questions/865115/how-do-i-correctly-clean-up-a-python-object
-    # official documentation: https://www.python.org/dev/peps/pep-0343/#specification-the-with-statement
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
     @classmethod
     def connect(cls, db: str = 'public', schema: str = 'public',
-                autocommit: bool = True, role=None, warehouse=None):
+                autocommit: bool = True, role=None, warehouse=None,
+                local_creds_path=None):
         """
-        Creates an engine and connection to the specified snowflake 
+        Creates an engine and connection to the specified snowflake
         db using your snowsql credentials.
-
-        :param db: the database name
-        :param schema: the schema name
-        :param autocommit: check sqlalchemy for autocommit behavior
-        :param role: override the default role for this user
-        :return: None
         """
         conn = SnowConn()
         conn._connect(
-            db, schema, autocommit=autocommit, role=role, warehouse=warehouse)
+            db=db,
+            schema=schema,
+            autocommit=autocommit,
+            role=role,
+            warehouse=warehouse,
+            credsman_name=None,
+            aws_region_name=None,
+            aws_access_key_id=None,
+            aws_secret_access_key=None,
+            fallback_to_local_creds=False,
+            local_creds_path=local_creds_path,
+        )
         return conn
 
     @classmethod
     def credsman_connect(cls, credsman_name: str, db: str = 'public',
                          schema: str = 'public', autocommit: bool = True,
-                         role: str = None, region_name="eu-west-1",
+                         role: str = None, region_name='eu-west-1',
                          aws_access_key_id=None, aws_secret_access_key=None,
-                         warehouse=None, fallback_to_local_creds=False):
+                         warehouse=None, fallback_to_local_creds=False,
+                         local_creds_path=None):
         """
-        Creates an engine and connection to the specified snowflake db . Note that
-        the context in which the process that is calling this method executes
-        in must be authenticated to read the AWS Secret Manager secret with
-        the provided name.
-
-        Assumes that you are using the AWS secrets manager stored as a json
-        object that will parsing json.loads and used like the following:
-
-        username = creds['USERNAME']
-        password = creds['PASSWORD']
-        account = creds['ACCOUNT']
-        role = creds['ROLE']
-
-        :param credsman_name: the named of the AWS Secrets Manager secret
-        :param db: the database name
-        :param schema: the schema name
-        :param autocommit: check sqlalchemy for autocommit behavior
-        :param role: override the default role for this user
-        :param region_name: forwarded to boto3
-        :param aws_access_key_id: forwarded to boto3
-        :param aws_secret_access_key: forwarded to boto3
-        :return:
+        Creates an engine and connection to the specified snowflake db using
+        credentials from AWS secrets manager (optionally falling back to
+        local credentials)
         """
         conn = SnowConn()
-        conn._credsman_connect(
-            credsman_name, db, schema, autocommit=autocommit, role=role,
-            region_name=region_name, aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key, warehouse=warehouse,
-            fallback_to_local_creds=fallback_to_local_creds
+        conn._connect(
+            db=db,
+            schema=schema,
+            autocommit=autocommit,
+            role=role,
+            warehouse=warehouse,
+            credsman_name=credsman_name,
+            aws_region_name=aws_region_name,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            fallback_to_local_creds=fallback_to_local_creds,
+            local_creds_path=local_creds_path,
         )
         return conn
+
+    def _connect(self, db: str, schema: str, autocommit: bool, role: str, warehouse:str,
+                credsman_name: str, aws_region_name: str, aws_access_key_id: str,
+                aws_secret_access_key: str, fallback_to_local_creds: bool, local_creds_path: str):
+
+        creds = None
+
+        # Try to get credentials from AWS secrets manager
+        if credsman_name:
+            creds = self._get_credsman_creds(credsman_name, aws_region_name,
+                aws_access_key_id, aws_secret_access_key)
+
+        # Try to get local credentials if:
+        # 1. No credsman_name was passed or
+        # 2. fallback_to_local_creds is True and an invalid credsman_name was passed
+        if (not credsman_name) or (creds is None and credsman_name and fallback_to_local_creds):
+            creds = self._get_local_creds(local_creds_path)
+
+        if creds:
+            self._create_engine(creds, db, schema, autocommit, role, warehouse)
+        else:
+            raise RuntimeError('Cannot create engine: missing credentials')
+
+    def _get_credsman_creds(self, credsman_name: str, aws_region_name: str,
+                        aws_access_key_id: str, aws_secret_access_key: str):
+        aws_creds = {};
+        if aws_access_key_id and aws_secret_access_key:
+            aws_creds = {
+                aws_access_key_id: aws_access_key_id,
+                aws_secret_access_key: aws_secret_access_key
+            }
+
+        session = boto3.session.Session(**aws_creds)
+        client = session.client(
+            service_name='secretsmanager',
+            region_name=region_name,
+            endpoint_url=f'https://secretsmanager.{region_name}.amazonaws.com'
+        )
+
+        try:
+            get_secret_value_response = client.get_secret_value(SecretId=credsman_name)
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == 'AccessDeniedException':
+                return None
+            else:
+                raise error
+
+        return json.loads(get_secret_value_response['SecretString'])
+
+    def _get_local_creds(self, local_creds_path: str):
+        home = os.path.expanduser("~")
+        snowsql_config = local_creds_path if local_creds_path else f'{home}/.snowsql/config'
+
+        if not os.path.exists(snowsql_config):
+            raise RuntimeError(
+                f'No snowsql config found in {snowsql_config}. '
+                f'Please install snowsql and add in your snowflake '
+                f'login credentials to the config file.'
+            )
+
+        config = configparser.ConfigParser()
+        config.read(snowsql_config)
+
+        return {
+            'AUTHENTICATOR': config['connections'].get('authenticator', None),
+            'USERNAME': config['connections']['username'],
+            'PASSWORD': config['connections']['password'],
+            'ACCOUNT': config['connections']['accountname'],
+            'ROLE': config['connections'].get('rolename', None),
+        }
+
+    def _create_engine(self, creds: dict, db: str, schema: str,
+                       autocommit: bool = True, role: str = None,
+                       warehouse=None):
+
+        account = creds['ACCOUNT']
+        username = creds['USERNAME']
+        password = creds['PASSWORD']
+        authenticator = creds.get('AUTHENTICATOR', None)
+        role = role if role else creds.get('ROLE', None)
+
+        if '.' not in account:
+            print(
+                'You may need to configure your account name to include the '
+                f'region. For example: {account}.eu-west-1')
+
+        schema_portion = f'?schema={schema}'
+
+        role_portion = ''
+        if role:
+            role_portion = f'&role={role}'
+
+        autocommit_portion = ''
+        if autocommit:
+            autocommit_portion = '&autocommit=true'
+
+        warehouse_portion = ''
+        if warehouse:
+            warehouse_portion = f'&warehouse={warehouse}'
+
+        authenticator_portion = ''
+        if authenticator:
+            authenticator_portion = f'&authenticator={authenticator}'
+
+        connection_string = (
+            f'snowflake://{username}:{password}@{account}/{db}{schema_portion}'
+            f'{role_portion}{autocommit_portion}{warehouse_portion}{authenticator_portion}'
+        )
+
+        engine = create_engine(connection_string)
+        self._alchemy_engine = engine
+        self._connection = self._alchemy_engine.connect()
+        self._raw_connection = self._connection.connection.connection
 
     def get_alchemy_engine(self):
         """
@@ -106,78 +211,6 @@ class SnowConn:
         """Returns the lower level snowflake-connector connection object
         """
         return self._raw_connection
-
-    def _connect(self, db: str = 'public', schema: str = 'public',
-                 autocommit: bool = True, role: str = None, warehouse=None):
-        home = os.path.expanduser("~")
-        snowsql_config = f'{home}/.snowsql/config'
-
-        if not os.path.exists(snowsql_config):
-            raise RuntimeError(
-                f'No snowsql config found in {snowsql_config}. '
-                f'Please install snowsql and add in your snowflake '
-                f'login credentials to the config file.'
-            )
-
-        config = configparser.ConfigParser()
-        # locally stored module that contains uname / password
-        config.read(snowsql_config)
-        creds = {
-            'USERNAME': config['connections']['username'],
-            'ACCOUNT': config['connections']['accountname'],
-            'PASSWORD': config['connections']['password'],
-            'ROLE': config['connections']['rolename']
-        }
-        self._create_engine(
-            creds, db, schema, autocommit=autocommit, role=role,
-            warehouse=warehouse)
-
-    def _credsman_connect(self, credsman_name: str, db: str = 'public',
-                          schema: str = 'public', autocommit: bool = True,
-                          role=None, region_name="eu-west-1",
-                          aws_access_key_id=None, aws_secret_access_key=None,
-                          warehouse=None, fallback_to_local_creds=False):
-        if aws_access_key_id and aws_secret_access_key:
-            # Start a session with boto, ensure to pass our credentials.
-            session = boto3.session.Session(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key
-            )
-        else:
-            # Start a session using the default boto3 behavior
-            session = boto3.session.Session()
-
-        client = session.client(
-            service_name='secretsmanager',
-            region_name=region_name,
-            endpoint_url=f'https://secretsmanager.{region_name}.amazonaws.com'
-        )
-
-        try:
-            get_secret_value_response = client.get_secret_value(
-                SecretId=credsman_name
-            )
-        except botocore.exceptions.ClientError as error:
-            if fallback_to_local_creds and error.response['Error']['Code'] == 'AccessDeniedException':
-                # Fallback to local Snowflake credentials
-                print('WARNING: You do not have permissions to fetch secret for credsman:', credsman_name,
-                    '\nFalling back to local Snowflake credentials.',
-                    '\nRemember to check your mobile device!')
-                self._connect(
-                    db,
-                    schema,
-                    autocommit,
-                    role,
-                    warehouse
-                )
-                return
-            else:
-                raise error
-
-        creds = json.loads(get_secret_value_response['SecretString'])
-        self._create_engine(
-            creds, db, schema, autocommit=autocommit, role=role,
-            warehouse=warehouse)
 
     def execute_simple(self, sql: str):
         """
@@ -300,60 +333,15 @@ class SnowConn:
                       if_exists='append', index=index, chunksize=chunksize,
                       **kwargs)
 
-
-
     def close(self):
         """
         Close off the current connection and dispose() of the engine
         is not documented anywhere in snowflake.
         :return: None
         """
-        # there are some cases (even with autocommit=True) that calling close
-        # on the connection will invoke a rollback of some portion of things
-        # done during the connection. In order to keep the behavior as
-        # consistent as possible, we will avoid calling close() on the
-        # connection and instead let the engine dispose of the connection
-        # which is robust but has the unfortunate side effect of causing the
-        # process to hang for a bit before it is closed. that means that all
-        # users of snowflake_conn have a few second delay when the script exits
-
-        # Update: I've been experimenting with my own version of this with the
-        # following line uncommented and have not noticed any issues. I'm
-        # thinking that the issue described above isn't a problem any more.
-        # Furthermote, bringing back this line of code stops the connection
-        # from hanging in some cases where an exception is thrown during
-        # or right after a query.
         self._connection.close()
         self._alchemy_engine.dispose()
 
     def get_current_role(self):
         results = self.execute_simple('show roles;')
         return [r for r in results if r['is_current'] == 'Y'][0]['name']
-
-    def _create_engine(self, creds: dict, db: str, schema: str,
-                       autocommit: bool = True, role: str = None,
-                       warehouse=None):
-        if role is not None:
-            creds['ROLE'] = role
-        username = creds['USERNAME']
-        password = creds['PASSWORD']
-        account = creds['ACCOUNT']
-        role = creds['ROLE']
-        if '.' not in account:
-            print(
-                'You may need to configure your account name to include the '
-                f'region. For example: {account}.eu-west-1')
-        autocommit_portion = ''
-        warehouse_portion = ''
-        if autocommit:
-            autocommit_portion = '&autocommit=true'
-        if warehouse:
-            warehouse_portion = f'&warehouse={warehouse}'
-        connection_string = (
-            f'snowflake://{username}:{password}@{account}/{db}?role={role}&'
-            f'schema={schema}{autocommit_portion}{warehouse_portion}'
-        )
-        engine = create_engine(connection_string)
-        self._alchemy_engine = engine
-        self._connection = self._alchemy_engine.connect()
-        self._raw_connection = self._connection.connection.connection
