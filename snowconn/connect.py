@@ -143,11 +143,11 @@ class SnowConn:
         config.read(snowsql_config)
 
         return {
-            'AUTHENTICATOR': config['connections'].get('authenticator', None),
-            'USERNAME': config['connections']['username'],
-            'PASSWORD': config['connections']['password'],
-            'ACCOUNT': config['connections']['accountname'],
-            'ROLE': config['connections'].get('rolename', None),
+            'AUTHENTICATOR': config['connection'].get('authenticator', None),
+            'USERNAME': config['connection']['username'],
+            'PASSWORD': config['connection']['password'],
+            'ACCOUNT': config['connection']['account'],
+            'ROLE': config['connection'].get('role', None),
         }
 
     def _create_engine(self, creds: dict, db: str, schema: str,

@@ -11,7 +11,7 @@ with open(readme_path, encoding='utf-8') as fh:
 
 setup(
     name='snowconn',
-    version='3.7.1',
+    version='3.7.3',
     description='Python utilities for connection to the Snowflake data '
                 'warehouse',
     url='https://github.com/Daltix/snowconn',
@@ -20,7 +20,7 @@ setup(
     packages=['snowconn'],
     install_requires=[
         'wheel==0.32.3',
-        'snowflake-sqlalchemy==1.2.3',
+        'snowflake-sqlalchemy==1.2.4',
     ],
     long_description=long_description,
     long_description_content_type='text/markdown',
