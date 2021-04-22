@@ -7,9 +7,13 @@ import configparser
 try:
     import boto3
     import botocore
-except ImportError as e:
+except ImportError:
     print('Cannot import boto3, if you want to use credsman_connect, please'
           ' ensure that boto3 is installed')
+
+
+class InvalidMethodException(Exception):
+    pass
 
 
 class SnowConn:
@@ -21,21 +25,34 @@ class SnowConn:
         self._alchemy_engine = None
         self._connection = None
         self._raw_connection = None
-    
-    # syntax for enter and exit methods adapted from:
-    # https://stackoverflow.com/questions/865115/how-do-i-correctly-clean-up-a-python-object
-    # official documentation: https://www.python.org/dev/peps/pep-0343/#specification-the-with-statement
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
     @classmethod
-    def connect(cls, db: str = 'public', schema: str = 'public',
+    def autoconnect(cls, method: str = 'snowsql', *args, **kwargs):
+        """
+        Generic connect method
+
+
+        from snowconn import SnowConn
+        conn = SnowConn.autoconnect(method='secretsmanager', credsman_name='acme')
+        """
+        if method == 'secretsmanager':
+            return cls.connect_secretsmanager(*args, **kwargs)
+        elif method == 'snowsql':
+            return cls.connect_snowsql(*args, **kwargs)
+        else:
+            raise InvalidMethodException(f'method {method} is not a valid connection method. Valid methods are "secretsmanager" and "snowsql"')
+
+    @classmethod
+    def connect_snowsql(cls, db: str = 'public', schema: str = 'public',
                 autocommit: bool = True, role=None, warehouse=None):
         """
-        Creates an engine and connection to the specified snowflake 
+        Creates an engine and connection to the specified snowflake
         db using your snowsql credentials.
 
         :param db: the database name
@@ -44,13 +61,13 @@ class SnowConn:
         :param role: override the default role for this user
         :return: None
         """
-        conn = SnowConn()
+        conn = cls()
         conn._connect(
             db, schema, autocommit=autocommit, role=role, warehouse=warehouse)
         return conn
 
     @classmethod
-    def credsman_connect(cls, credsman_name: str, db: str = 'public',
+    def connect_secretsmanager(cls, credsman_name: str, db: str = 'public',
                          schema: str = 'public', autocommit: bool = True,
                          role: str = None, region_name="eu-west-1",
                          aws_access_key_id=None, aws_secret_access_key=None,
@@ -79,7 +96,7 @@ class SnowConn:
         :param aws_secret_access_key: forwarded to boto3
         :return:
         """
-        conn = SnowConn()
+        conn = cls()
         conn._credsman_connect(
             credsman_name, db, schema, autocommit=autocommit, role=role,
             region_name=region_name, aws_access_key_id=aws_access_key_id,
@@ -87,6 +104,20 @@ class SnowConn:
             fallback_to_local_creds=fallback_to_local_creds
         )
         return conn
+
+    @classmethod
+    def connect(cls, *args, **kwargs):
+        """
+        Legacy connection
+        """
+        return cls.connect_snowsql(*args, **kwargs)
+
+    @classmethod
+    def credsman_connect(cls, *args, **kwargs):
+        """
+        Legacy connection
+        """
+        return cls.connect_secretsmanager(*args, **kwargs)
 
     def get_alchemy_engine(self):
         """
@@ -241,7 +272,7 @@ class SnowConn:
             sql = fh.read()
         return self.execute_string(sql)
 
-    def read_df(self, sql: str):
+    def read_df(self, sql: str, lowercase_columns: bool = True):
         """
         Executes the sql passed in and reads the result into a pandas
         dataframe.
@@ -249,6 +280,8 @@ class SnowConn:
         If you want to use pandas, you'll have to install it yourself as it is
         not a requirement of this package due to its weight.
         :param sql: string containing a single SQL statement
+        :param lowercase_columns: boolean, wether or not to lowercase column names
+        (snowflake fetch_pandas_all returns uppercase)
         :return: pandas DataFrame
         """
         try:
@@ -256,7 +289,12 @@ class SnowConn:
         except ImportError as e:
             print('pandas not installed, cannot execute read_df')
             raise e
-        return pd.read_sql_query(sql, self._connection)
+        cursor = self._raw_connection.cursor(snowflake.connector.DictCursor)
+        cursor.execute(sql)
+        read_df = cursor.fetch_pandas_all()
+        if lowercase_columns:
+            read_df.columns = map(str.lower, read_df.columns)
+        return read_df
 
     def write_df(self, df, table: str, schema=None, if_exists: str = 'replace',
                  index: bool = False, temporary_table=False,
@@ -299,8 +337,6 @@ class SnowConn:
             df.to_sql(table, con=self._connection,
                       if_exists='append', index=index, chunksize=chunksize,
                       **kwargs)
-
-
 
     def close(self):
         """
