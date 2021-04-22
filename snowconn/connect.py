@@ -143,11 +143,11 @@ class SnowConn:
         config.read(snowsql_config)
 
         return {
-            'AUTHENTICATOR': config['connections'].get('authenticator', None),
+            'AUTHENTICATOR': config['connections'].get('authenticator'),
             'USERNAME': config['connections']['username'],
             'PASSWORD': config['connections']['password'],
             'ACCOUNT': config['connections']['accountname'],
-            'ROLE': config['connections'].get('rolename', None),
+            'ROLE': config['connections'].get('rolename'),
         }
 
     def _create_engine(self, creds: dict, db: str, schema: str,
@@ -157,8 +157,8 @@ class SnowConn:
         account = creds['ACCOUNT']
         username = creds['USERNAME']
         password = creds['PASSWORD']
-        authenticator = creds.get('AUTHENTICATOR', None)
-        role = role if role else creds.get('ROLE', None)
+        authenticator = creds.get('AUTHENTICATOR')
+        role = role if role else creds.get('ROLE')
 
         if '.' not in account:
             print(
