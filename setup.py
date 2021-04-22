@@ -8,7 +8,6 @@ readme_path = path.join(this_directory, 'README.md')
 with open(readme_path, encoding='utf-8') as fh:
     long_description = fh.read()
 
-
 setup(
     name='snowconn',
     version='3.7.3',
