@@ -30,8 +30,10 @@ from snowconn import SnowConn
 ### (1) Connection using your own personal creds
 
 Install [snowsql](https://docs.snowflake.net/manuals/user-guide/snowsql-install-config.html)
-and then configure the `~/.snowsql/config` as per the instructions. You can test that it is correctly installed
-by then executing `snowsql` from the command line. 
+and configure `~/.snowsql/config` as per the instructions (if you are using SSO, remember
+to include an "authenticator" line, [see here](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#using-sso-with-client-applications-that-connect-to-snowflake) for possible values
+and their meaning). You can test that it is correctly installed by then executing `snowsql`
+from the command line. 
 
 *WARNING* Be sure to configure your account name like the following:
 

@@ -8,7 +8,6 @@ readme_path = path.join(this_directory, 'README.md')
 with open(readme_path, encoding='utf-8') as fh:
     long_description = fh.read()
 
-
 setup(
     name='snowconn',
     version='3.8',
@@ -21,7 +20,7 @@ setup(
     install_requires=[
         'wheel==0.32.3',
         'snowflake-connector-python==2.4.2',
-        'snowflake-sqlalchemy',
+        'snowflake-sqlalchemy>=1.2, <1.3',
     ],
     long_description=long_description,
     long_description_content_type='text/markdown',
