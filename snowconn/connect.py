@@ -1,15 +1,12 @@
-import os
 import json
-from sqlalchemy import create_engine
-import snowflake.connector
-import configparser
+import logging
+from typing import List
+import os
+import warnings
 
-try:
-    import boto3
-    import botocore
-except ImportError:
-    print('Cannot import boto3, if you want to use credsman_connect, please'
-          ' ensure that boto3 is installed')
+import configparser
+import snowflake.connector
+from sqlalchemy import create_engine
 
 
 class InvalidMethodException(Exception):
@@ -33,30 +30,36 @@ class SnowConn:
         self.close()
 
     @classmethod
-    def connect(cls, method: str = 'local', *args, **kwargs):
+    def connect(cls, methods: List[str] = ['local'], *args, **kwargs):
         """
         Generic connect method
-
-
+        Will iterate through a list of connection methods until one succeeds
+        in creating a connection
         from snowconn import SnowConn
-        conn = SnowConn.autoconnect(method='secretsmanager', credsman_name='acme')
+        conn = SnowConn.autoconnect(method=['secretsmanager'], credsman_name='acme')
         """
-        if method == 'secretsmanager':
-            return cls.connect_secretsmanager(*args, **kwargs)
-        elif method == 'local':
-            return cls.connect_local(*args, **kwargs)
+        available_methods = {
+            'secretsmanager': cls.connect_secretsmanager,
+            'local': cls.connect_local,
+        }
+        for method in methods:
+            if method in available_methods:
+                try:
+                    return available_methods[method](*args, **kwargs)
+                except Exception as e:
+                    logging.error(e)
         else:
-            raise InvalidMethodException(f'method {method} is not a valid connection method. Valid methods are "secretsmanager" and "snowsql"')
+            raise InvalidMethodException(f'methods {methods} are not a valid connection methods. Valid methods are "secretsmanager, local"')
 
     @classmethod
     def connect_local(cls, db: str = 'public', schema: str = 'public',
-                autocommit: bool = True, role=None, warehouse=None):
+                autocommit: bool = True, role=None, warehouse=None, local_creds_path: str = None):
         """
         Creates an engine and connection to the specified snowflake
         db using your local snowsql credentials.
         """
         conn = cls()
-        creds = conn._get_local_creds()
+        creds = conn._get_local_creds(local_creds_path)
         conn._create_engine(
             creds, db, schema, autocommit=autocommit, role=role,
             warehouse=warehouse)
@@ -72,16 +75,16 @@ class SnowConn:
                 f'Please install snowsql and add in your snowflake '
                 f'login credentials to the config file.'
             )
-
-        config = configparser.ConfigParser()
-        config.read(snowsql_config)
+        else:
+            config = configparser.ConfigParser()
+            config.read(snowsql_config)
 
         return {
-            'AUTHENTICATOR': config['connections'].get('authenticator'),
-            'USERNAME': config['connections']['username'],
-            'PASSWORD': config['connections']['password'],
             'ACCOUNT': config['connections']['accountname'],
+            'USERNAME': config['connections']['username'],
             'ROLE': config['connections'].get('rolename'),
+            'PASSWORD': config['connections'].get('password'),
+            'AUTHENTICATOR': config['connections'].get('authenticator'),
         }
 
     @classmethod
@@ -93,14 +96,22 @@ class SnowConn:
                          local_creds_path=None, region_name=None):
         """
         Creates an engine and connection to the specified snowflake db using
-        credentials from AWS secrets manager (optionally falling back to
-        local credentials)
+        credentials from AWS secrets manager
         """
+        try:
+            import boto3 # noqa
+        except ImportError as e:
+            logging.warning('boto3 not installed, cannot execute connect_secretsmanager')
+            raise e
         if region_name:
-            raiseDeprecationWarning("""
+            warnings.warn(
+                """
                 The argument 'region_name' will be deprecated in future versions.
                 Please use 'region_name' instead
-            """)
+                """,
+                DeprecationWarning,
+                stacklevel=2,
+            )
             aws_region_name = region_name
         conn = SnowConn()
         creds = conn._get_secretsmanager_creds(credsman_name, aws_region_name,
@@ -108,12 +119,23 @@ class SnowConn:
         conn._create_engine(creds, db, schema, autocommit, role, warehouse)
         return conn
 
-    # legacy connector
-    credsman_connect = connect_secretsmanager
+    @classmethod
+    def credsman_connect(cls, *args, **kwargs):
+        """Legacy Secretsmanager connection"""
+        warnings.warn(
+            """
+            Method `credsman_connect` will be deprecated in future versions.
+            Please use `SnowConn.connect(methods=['secretsmanager']` instead
+            """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return cls.connect_secretsmanager(*args, **kwargs)
 
     def _get_secretsmanager_creds(self, credsman_name: str, region_name: str,
                         aws_access_key_id: str, aws_secret_access_key: str):
-        aws_creds = {};
+        import boto3, botocore # noqa
+        aws_creds = {}
         if aws_access_key_id and aws_secret_access_key:
             aws_creds = {
                 aws_access_key_id: aws_access_key_id,
@@ -126,22 +148,17 @@ class SnowConn:
             region_name=region_name,
             endpoint_url=f'https://secretsmanager.{region_name}.amazonaws.com'
         )
-
+        '''
         try:
             get_secret_value_response = client.get_secret_value(SecretId=credsman_name)
         except botocore.exceptions.ClientError as error:
-            if error.response['Error']['Code'] == 'AccessDeniedException':
+            if error.response['Error']['Code'] in ('AccessDeniedException', 'ValidationException'):
                 return None
             else:
                 raise error
+        '''
+        get_secret_value_response = client.get_secret_value(SecretId=credsman_name)
         return json.loads(get_secret_value_response['SecretString'])
-
-    def get_alchemy_engine(self):
-        """
-        Returns the sqlalchemy engine that is the result of a call to
-        either connect() or credsman_connect()
-        """
-        return self._alchemy_engine
 
     def _create_engine(self, creds: dict, db: str, schema: str,
                        autocommit: bool = True, role: str = None,
@@ -154,7 +171,7 @@ class SnowConn:
         role = role if role else creds.get('ROLE')
 
         if '.' not in account:
-            print(
+            logging.warning(
                 'You may need to configure your account name to include the '
                 f'region. For example: {account}.eu-west-1')
 
@@ -280,9 +297,9 @@ class SnowConn:
         :return: pandas DataFrame
         """
         try:
-            import pandas as pd
+            import pandas as pd # noqa
         except ImportError as e:
-            print('pandas not installed, cannot execute read_df')
+            logging.warning('pandas not installed, cannot execute read_df')
             raise e
         cursor = self._raw_connection.cursor(snowflake.connector.DictCursor)
         cursor.execute(sql)
