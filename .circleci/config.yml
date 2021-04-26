@@ -2,7 +2,7 @@
 #
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
@@ -16,10 +16,6 @@ jobs:
       # - image: circleci/postgres:9.4
 
     working_directory: ~/repo
-
-    filters:
-      branches:
-        only: master
 
     steps:
       - checkout
@@ -38,3 +34,11 @@ jobs:
           command: |
             . venv/bin/activate
             twine upload --skip-existing dist/*
+
+workflows:
+  workflow_test_and_deploy_prod:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
