@@ -35,7 +35,6 @@ jobs:
             . venv/bin/activate
             twine upload --skip-existing dist/*
 
-
 workflows:
   workflow_test_and_deploy_prod:
     jobs:
