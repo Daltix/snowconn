@@ -3,7 +3,9 @@
 This repository is a wrapper around the [snowflake SQLAlchemy](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html)
 library. It manages the creation of connections and provides a few convenience functions that should be good enough
 to cover most use cases yet be flexible enough to allow additional wrappers to be written around to serve more specific
-use cases for different teams. 
+use cases for different teams.
+
+---
 
 ## Installation
 
@@ -19,6 +21,27 @@ To install the latest version directly from the repo:
 pip install 'git+ssh://git@github.com/Daltix/SnowConn.git@master#egg=snowconn'
 ```
 
+If you want to use pandas functionality (read/write from/to pandas dataframes) you can install
+as follows:
+
+```bash
+pip install snowconn[pandas]
+```
+
+If you want to enable SSO authentication you can install as follows:
+
+```bash
+pip install snowconn[storage]
+```
+
+If you want to install all functionality (AWS secrets manager connection, SSO, pandas) you can install as follows:
+
+```bash
+pip install snowconn[all]
+```
+
+---
+
 ## Connection
 
 Everything is implemented in a single `SnowConn` class. To import it is always the same:
@@ -30,29 +53,42 @@ from snowconn import SnowConn
 ### (1) Connection using your own personal creds
 
 Install [snowsql](https://docs.snowflake.net/manuals/user-guide/snowsql-install-config.html)
-and then configure the `~/.snowsql/config` as per the instructions. You can test that it is correctly installed
-by then executing `snowsql` from the command line. 
+and configure `~/.snowsql/config` as per the instructions
+
+You can test that it is correctly installed by then executing `snowsql`
+from the command line.
 
 *WARNING* Be sure to configure your account name like the following:
 
 ```
-accountname = eq94734.eu-west-1
+accountname = ACCOUNT_ID.REGION
 ```
 
-If you don't include the `eu-west-1` part, it will hang for about a minute and then give you a permission denied.
+*(example `accountname = eq90000.eu-west-1`)*
+
+If you don't include the region part (`eu-west-1` in the example above), it will hang for about a minute and then give you a permission denied.
 
 Now that you are able to execute `snowsql` to successfully connect, you are ready to use the `SnowConn.connect` function:
 
 ```py
-conn = SnowConn.connect()
+with SnowConn.connect() as conn:
+    # your conn. code here
 ```
 That's it you are connected! You can connect to a specific schema / database with the following:
 
 ```py
-conn = SnowConn.connect('daltix_prod', 'public')
+with SnowConn.connect('daltix_database', 'public') as conn:
+    # your conn. code here
 ```
 
-### (2) Connection using aws secrets manager
+** NOTE: Connect using SSO **
+If you are using SSO (Okta or others), you need to update your .snowsqlk/config with the following modifications:
+- Include an "authenticator" line, [see here](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#using-sso-with-client-applications-that-connect-to-snowflake) for possible values
+and their meaning).
+- replace username for your username (instead of your snowflake username)
+
+
+### (2) Connection using AWS Secrets Manager
 
 You need to have boto3 installed which you can do so with the following:
 
@@ -69,19 +105,28 @@ Now you must satisfy the folloing requirements:
     - `ACCOUNT`
     - `ROLE`
 
-For this example, we will assume the `price_plotter` is the secret manager that we will be using. 
+For this example, we will assume the `price_plotter` is the secret manager that we will be using.
 
 Now that you know the name of the secret, you MUST be sure that the context in which it is running has access to read
 that secret. Once this is done, you can now execute the following code:
 
 ```py
-conn = SnowConn.credsman_connect('price_plotter')
+with SnowConn.connect(methods=['secretsmanager'], credsman_name='price_plotter') as conn:
+    # your conn. code here
+```
+
+Alternatively you can use the specific `connect_secretsmanager` method:
+
+```py
+with SnowConn.connect_secretsmanager('price_plotter') as conn:
+    # your conn. code here
 ```
 
 And you are connected! You can also pass the database and schema along
 
 ```py
-conn = SnowConn.credsman_connect('price_plotter', 'daltix_prod', 'public')
+with SnowConn.connect_secretsmanager('price_plotter', 'daltix', 'public') as conn:
+    # your conn. code here
 ```
 
 An example of a policy that gives access to the `price_plotter` looks like this:
@@ -122,13 +167,32 @@ iamRoleStatements:
         - { Fn::Sub: "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:price_plotter-??????" }
 ```
 
+---
+
 ## API
 
 Now that you're connected, there are a few low-level functions that you can use to programatically interact with
 the snowflake tables that you have access to.
 
 The rest of these examples assume that you have used one of the above methods to connect and have access to the
-`daltix_prod.public.price` table.
+`daltix.public.price` table.
+
+### Creating a connection
+
+Creating a connection is very easy (see examples above for connection options):
+
+```py
+with SnowConn.connect() as conn:
+    # your conn. code here
+```
+
+You can also create connections manually without using a context (this is not recommended, see *Known Issues* section below), make sure to close the connection after you are done:
+
+```py
+conn = SnowConn.connect()
+# your conn. code here
+conn.close() # close the connection when done
+```
 
 ### execute_simple
 
@@ -181,7 +245,7 @@ It takes one sql string as an argument and returns a dataframe.
 2  f5be8a5da3bde2da6a63fcad4e5c30823027324092234c 2018-11-18 00:00:02   0.40
 3  807e2a7706b8c515264fa55bed3891d5685ac5ee0148f0 2018-11-18 00:00:04   3.70
 4  1e56339f99dc866cd4b87679aa686556a5ad2398d00c95 2018-11-18 00:00:06   3.76
->>> 
+>>>
 ```
 
 ### write_df
@@ -218,7 +282,7 @@ of the functions in the rest of this repo are serving your needs.
 ### get_alchemy_engine
 
 This is the result of [create_engine()](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html#connection-parameters)
-which was called during `connect()` or `credsman_connect()`. It does not represent an active connection to the database
+which was called during `connect()` . It does not represent an active connection to the database
 but rather acts as a factory for connections.
 
 This is useful for using the most commonly abstracted things in other libraries such as dashboards, pandas, etc. 
@@ -231,3 +295,23 @@ This returns the result of the creating the sqlalchemy engine and then calling `
 of `get_alchemy_engine` this represents an active connection to Snowflake and this has a session associated with it.
 
 You can see the object documentation [here](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html#parameters-and-behavior)
+
+## Known issues
+
+There is a bug with `snowflake-connector` which causes some connections to Snowflake to not close properly in certain circumstances. This can cause timeout errors.
+
+You can handle this in two ways: the first is to wrap usage of the connection in a `try/finally` block to ensure the connection is explicitly closed, like this:
+```
+from snowconn import SnowConn
+conn = SnowConn.connect(...)
+try:
+    result = execute_string(query) # or result = read_df(query), etc
+finally:
+    conn.close()
+```
+
+The second way is to use SnowConn with the `with` syntax, as follows:
+```
+with SnowConn.connect() as conn:
+    conn.read_df(...)
+```
