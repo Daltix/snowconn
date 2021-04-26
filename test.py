@@ -1,20 +1,10 @@
+"""
+Simplest sanity check test file
+"""
+
 from snowconn import SnowConn
 
-conn = SnowConn.connect(
-    db='util_db',
-    schema='public',
-)
-
+conn = SnowConn.connect()
+print(conn.get_current_role())
 print(conn.execute_simple('select current_warehouse();'))
-
-conn.close()
-
-conn = SnowConn.connect(
-    db='util_db',
-    schema='public',
-    warehouse='TEST_WH'
-)
-
-print(conn.execute_simple('select current_warehouse();'))
-
 conn.close()
