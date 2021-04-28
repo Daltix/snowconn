@@ -53,7 +53,8 @@ class SnowConn:
 
     @classmethod
     def connect_local(cls, db: str = 'public', schema: str = 'public',
-                autocommit: bool = True, role=None, warehouse=None, local_creds_path: str = None):
+                autocommit: bool = True, role=None, warehouse=None,
+                local_creds_path: str = None, **kwargs):
         """
         Creates an engine and connection to the specified snowflake
         db using your local snowsql credentials.
@@ -93,7 +94,7 @@ class SnowConn:
                          role: str = None, aws_region_name='eu-west-1',
                          aws_access_key_id=None, aws_secret_access_key=None,
                          warehouse=None, fallback_to_local_creds=False,
-                         local_creds_path=None, region_name=None):
+                         local_creds_path=None, region_name=None, **kwargs):
         """
         Creates an engine and connection to the specified snowflake db using
         credentials from AWS secrets manager
