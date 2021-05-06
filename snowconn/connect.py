@@ -7,6 +7,7 @@ import warnings
 import configparser
 import snowflake.connector
 from sqlalchemy import create_engine
+from snowflake.connector.pandas_tools import pd_writer
 
 
 class InvalidMethodException(Exception):
@@ -333,7 +334,8 @@ class SnowConn:
 
         if not temporary_table:
             df.to_sql(table, con=self._connection,
-                      if_exists=if_exists, index=index, chunksize=chunksize,
+                      if_exists=if_exists, index=index,
+                      chunksize=chunksize, method=pd_writer,
                       **kwargs)
         else:
             import pandas as pd
