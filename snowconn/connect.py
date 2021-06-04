@@ -38,15 +38,18 @@ class SnowConn:
         from snowconn import SnowConn
         conn = SnowConn.autoconnect(method=['secretsmanager'], credsman_name='acme')
         """
+        print(f'got methods {methods}')
         available_methods = {
             'secretsmanager': cls.connect_secretsmanager,
             'local': cls.connect_local,
         }
         for method in methods:
+            print(f'trying method: {method}')
             if method in available_methods:
                 try:
                     return available_methods[method](*args, **kwargs)
                 except Exception as e:
+                    print(f'got exception: {str(e)}')
                     logging.error(e)
         else:
             raise InvalidMethodException(f'methods {methods} are not a valid connection methods. Valid methods are "secretsmanager, local"')
