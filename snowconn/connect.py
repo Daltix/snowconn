@@ -336,7 +336,7 @@ class SnowConn:
             schema = schema.upper()
         table = table.upper()
 
-        location = (
+        schema_table = (
                 (('"' + schema + '".') if schema else "")
                 + ('"' + table + '"')
         )
@@ -349,7 +349,7 @@ class SnowConn:
             import pandas as pd
             sql = pd.io.sql.get_schema(
                 df, name=table, con=self._connection
-            ).replace(f'CREATE TABLE "{table}"', f'CREATE OR REPLACE TEMPORARY TABLE {location}')
+            ).replace(f'CREATE TABLE "{table}"', f'CREATE OR REPLACE TEMPORARY TABLE {schema_table}')
             self.execute_simple(sql)
             df.to_sql(table, con=self._connection, schema=schema,
                       if_exists='append', index=index, chunksize=chunksize,
