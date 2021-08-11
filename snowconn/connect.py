@@ -323,6 +323,7 @@ class SnowConn:
 
         :param df: pandas dataframe to write to the table
         :param table: the name of ONLY the table
+        :param schema: The schema of the table
         :param if_exists: forwarded on to DataFrame.to_sql
         :param index: forwarded on to DataFrame.to_sql
         :param temporary_table: Runs a bit of a hack to create temp tables
@@ -331,23 +332,26 @@ class SnowConn:
         :return: None
         """
 
+        if schema:
+            schema = schema.upper()
+        table = table.upper()
+
+        schema_table = (
+                (('"' + schema + '".') if schema else "")
+                + ('"' + table + '"')
+        )
+
         if not temporary_table:
-            df.to_sql(table, con=self._connection,
+            df.to_sql(table, con=self._connection, schema=schema,
                       if_exists=if_exists, index=index, chunksize=chunksize,
                       **kwargs)
         else:
             import pandas as pd
-
-            if schema:
-                create_temporary_clause = 'CREATE OR REPLACE TEMPORARY TABLE {SCHEMA}.'.format(SCHEMA=schema)
-            else:
-                create_temporary_clause = 'CREATE OR REPLACE TEMPORARY TABLE'
-
             sql = pd.io.sql.get_schema(
                 df, name=table, con=self._connection
-            ).replace('CREATE TABLE', create_temporary_clause)
+            ).replace(f'CREATE TABLE "{table}"', f'CREATE OR REPLACE TEMPORARY TABLE {schema_table}')
             self.execute_simple(sql)
-            df.to_sql(table, con=self._connection,
+            df.to_sql(table, con=self._connection, schema=schema,
                       if_exists='append', index=index, chunksize=chunksize,
                       **kwargs)
 
