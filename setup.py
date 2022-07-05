@@ -18,9 +18,8 @@ setup(
     author_email='snowconn@daltix.com',
     packages=['snowconn'],
     install_requires=[
-        'wheel',
         'six',
-        'snowflake-connector-python>=2.7.9,<2.8.0',
+        'snowflake-connector-python==2.7.9',
         'snowflake-sqlalchemy>=1.3, <1.4',
     ],
     long_description=long_description,
@@ -28,15 +27,15 @@ setup(
 
     extras_require={
         "pandas": [
-            "snowflake-connector-python[pandas]>=2.7.9,<2.8.0",
+            "snowflake-connector-python[pandas]==2.7.9",
         ],
         "storage": [
-            "snowflake-connector-python[secure-local-storage]>=2.7.9,<2.8.0",
+            "snowflake-connector-python[secure-local-storage]==2.7.9",
             'wheel',
         ],
         "all": [
             "boto3",
-            "snowflake-connector-python[secure-local-storage,pandas]>=2.7.9,<2.8.0",
+            "snowflake-connector-python[secure-local-storage,pandas]==2.7.9",
         ]
     }
 )
