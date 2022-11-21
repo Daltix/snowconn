@@ -138,7 +138,7 @@ class SnowConn:
     def connect_credentials(cls, account: str, username: str, password: str,
                             authenticator: str = None, db: str = 'public',
                             schema: str = 'public', autocommit: bool = True,
-                            role: str = None, warehouse=None, **kwargs):
+                            role: str = None, warehouse = None, **kwargs):
         """
         Creates an engine and connection to the specified snowflake db using
         the provided credentials
@@ -146,10 +146,10 @@ class SnowConn:
 
         conn = cls()
         creds = {
-          'ACCOUNT': account,
-          'USERNAME': username,
-          'PASSWORD': password,
-          'AUTHENTICATOR': authenticator,
+            'ACCOUNT': account,
+            'USERNAME': username,
+            'PASSWORD': password,
+            'AUTHENTICATOR': authenticator,
         }
         conn._create_engine(creds, db, schema, autocommit, role, warehouse)
         return conn
