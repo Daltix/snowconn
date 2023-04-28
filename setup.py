@@ -19,7 +19,7 @@ setup(
     packages=['snowconn'],
     install_requires=[
         'six',
-        'snowflake-connector-python==2.7.9',
+        'snowflake-connector-python==2.8.3',
         'snowflake-sqlalchemy>=1.3, <1.4',
         'sqlalchemy<=1.4.41',
     ],
