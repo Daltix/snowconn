@@ -41,6 +41,7 @@ class SnowConn:
         available_methods = {
             'secretsmanager': cls.connect_secretsmanager,
             'local': cls.connect_local,
+            'credentials': cls.connect_credentials,
         }
         for method in methods:
             if method in available_methods:
@@ -49,7 +50,7 @@ class SnowConn:
                 except Exception as e:
                     logging.error(e)
         else:
-            raise InvalidMethodException(f'methods {methods} are not a valid connection methods. Valid methods are "secretsmanager, local"')
+            raise InvalidMethodException(f'methods {methods} are not a valid connection methods. Valid methods are "secretsmanager, local, credentials"')
 
     @classmethod
     def connect_local(cls, db: str = 'public', schema: str = 'public',
@@ -132,6 +133,26 @@ class SnowConn:
             stacklevel=2,
         )
         return cls.connect_secretsmanager(*args, **kwargs)
+
+    @classmethod
+    def connect_credentials(cls, account: str, username: str, password: str,
+                            authenticator: str = None, db: str = 'public',
+                            schema: str = 'public', autocommit: bool = True,
+                            role: str = None, warehouse = None, **kwargs):
+        """
+        Creates an engine and connection to the specified snowflake db using
+        the provided credentials
+        """
+
+        conn = cls()
+        creds = {
+            'ACCOUNT': account,
+            'USERNAME': username,
+            'PASSWORD': password,
+            'AUTHENTICATOR': authenticator,
+        }
+        conn._create_engine(creds, db, schema, autocommit, role, warehouse)
+        return conn
 
     def _get_secretsmanager_creds(self, credsman_name: str, region_name: str,
                         aws_access_key_id: str, aws_secret_access_key: str):

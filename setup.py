@@ -10,7 +10,7 @@ with open(readme_path, encoding='utf-8') as fh:
 
 setup(
     name='snowconn',
-    version='3.11',
+    version='3.11.0',
     description='Python utilities for connection to the Snowflake data '
                 'warehouse',
     url='https://github.com/Daltix/snowconn',
@@ -21,6 +21,7 @@ setup(
         'wheel==0.40.0',
         'snowflake-connector-python==3.0.4',
         'snowflake-sqlalchemy==1.4.7',
+        'six',
     ],
     long_description=long_description,
     long_description_content_type='text/markdown',
