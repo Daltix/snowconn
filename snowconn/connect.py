@@ -115,10 +115,14 @@ class SnowConn:
                 stacklevel=2,
             )
             aws_region_name = region_name
+        
+        # Workaround for: https://status.snowflake.com/incidents/txclg2cyzq32
+        disable_ocsp_checks = bool(kwargs.get('disable_ocsp_checks'))
+
         conn = SnowConn()
         creds = conn._get_secretsmanager_creds(credsman_name, aws_region_name,
                 aws_access_key_id, aws_secret_access_key)
-        conn._create_engine(creds, db, schema, autocommit, role, warehouse)
+        conn._create_engine(creds, db, schema, autocommit, role, warehouse, disable_ocsp_checks)
         return conn
 
     @classmethod
@@ -151,7 +155,11 @@ class SnowConn:
             'PASSWORD': password,
             'AUTHENTICATOR': authenticator,
         }
-        conn._create_engine(creds, db, schema, autocommit, role, warehouse)
+
+        # Workaround for: https://status.snowflake.com/incidents/txclg2cyzq32
+        disable_ocsp_checks = bool(kwargs.get('disable_ocsp_checks'))
+
+        conn._create_engine(creds, db, schema, autocommit, role, warehouse, disable_ocsp_checks)
         return conn
 
     def _get_secretsmanager_creds(self, credsman_name: str, region_name: str,
@@ -184,7 +192,7 @@ class SnowConn:
 
     def _create_engine(self, creds: dict, db: str, schema: str,
                        autocommit: bool = True, role: str = None,
-                       warehouse=None):
+                       warehouse: str  None, disable_ocsp_checks: bool = False):
 
         account = creds['ACCOUNT']
         username = creds['USERNAME']
@@ -220,7 +228,11 @@ class SnowConn:
             f'{role_portion}{autocommit_portion}{warehouse_portion}{authenticator_portion}'
         )
 
-        engine = create_engine(connection_string)
+        connect_args = dict()
+        if disable_ocsp_checks:
+            connect_args['disable_ocsp_checks'] = True
+
+        engine = create_engine(connection_string, connect_args=connect_args)
         self._alchemy_engine = engine
         self._connection = self._alchemy_engine.connect()
         self._raw_connection = self._connection.connection.connection
