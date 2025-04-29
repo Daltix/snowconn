@@ -60,11 +60,10 @@ class SnowConn:
         Creates an engine and connection to the specified snowflake
         db using your local snowsql credentials.
         """
+        connect_args = kwargs.get('connect_args', {})
         conn = cls()
         creds = conn._get_local_creds(local_creds_path)
-        conn._create_engine(
-            creds, db, schema, autocommit=autocommit, role=role,
-            warehouse=warehouse)
+        conn._create_engine(creds, db, schema, autocommit, role, warehouse, connect_args)
         return conn
 
     def _get_local_creds(self, local_creds_path: str = None):
@@ -115,14 +114,13 @@ class SnowConn:
                 stacklevel=2,
             )
             aws_region_name = region_name
-        
-        # Workaround for: https://status.snowflake.com/incidents/txclg2cyzq32
-        disable_ocsp_checks = bool(kwargs.get('disable_ocsp_checks'))
+
+        connect_args = kwargs.get('connect_args', {})
 
         conn = SnowConn()
         creds = conn._get_secretsmanager_creds(credsman_name, aws_region_name,
                 aws_access_key_id, aws_secret_access_key)
-        conn._create_engine(creds, db, schema, autocommit, role, warehouse, disable_ocsp_checks)
+        conn._create_engine(creds, db, schema, autocommit, role, warehouse, connect_args)
         return conn
 
     @classmethod
@@ -142,7 +140,7 @@ class SnowConn:
     def connect_credentials(cls, account: str, username: str, password: str,
                             authenticator: str = None, db: str = 'public',
                             schema: str = 'public', autocommit: bool = True,
-                            role: str = None, warehouse = None, **kwargs):
+                            role: str = None, warehouse: str = None, **kwargs):
         """
         Creates an engine and connection to the specified snowflake db using
         the provided credentials
@@ -156,10 +154,8 @@ class SnowConn:
             'AUTHENTICATOR': authenticator,
         }
 
-        # Workaround for: https://status.snowflake.com/incidents/txclg2cyzq32
-        disable_ocsp_checks = bool(kwargs.get('disable_ocsp_checks'))
-
-        conn._create_engine(creds, db, schema, autocommit, role, warehouse, disable_ocsp_checks)
+        connect_args = kwargs.get('connect_args', {})
+        conn._create_engine(creds, db, schema, autocommit, role, warehouse, connect_args)
         return conn
 
     def _get_secretsmanager_creds(self, credsman_name: str, region_name: str,
@@ -192,7 +188,7 @@ class SnowConn:
 
     def _create_engine(self, creds: dict, db: str, schema: str,
                        autocommit: bool = True, role: str = None,
-                       warehouse: str = None, disable_ocsp_checks: bool = False):
+                       warehouse: str = None, connect_args: dict = {}):
 
         account = creds['ACCOUNT']
         username = creds['USERNAME']
@@ -227,10 +223,6 @@ class SnowConn:
             f'snowflake://{username}:{password}@{account}/{db}{schema_portion}'
             f'{role_portion}{autocommit_portion}{warehouse_portion}{authenticator_portion}'
         )
-
-        connect_args = dict()
-        if disable_ocsp_checks:
-            connect_args['disable_ocsp_checks'] = True
 
         engine = create_engine(connection_string, connect_args=connect_args)
         self._alchemy_engine = engine
