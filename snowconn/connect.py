@@ -192,7 +192,7 @@ class SnowConn:
 
     def _create_engine(self, creds: dict, db: str, schema: str,
                        autocommit: bool = True, role: str = None,
-                       warehouse: str  None, disable_ocsp_checks: bool = False):
+                       warehouse: str = None, disable_ocsp_checks: bool = False):
 
         account = creds['ACCOUNT']
         username = creds['USERNAME']
