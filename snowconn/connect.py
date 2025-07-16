@@ -209,7 +209,7 @@ class SnowConn:
 
         autocommit_portion = ''
         if autocommit:
-            autocommit_portion = '&autocommit=true'
+            autocommit_portion = '&autocommit=True'
 
         warehouse_portion = ''
         if warehouse:
