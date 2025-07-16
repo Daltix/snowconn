@@ -10,7 +10,7 @@ with open(readme_path, encoding='utf-8') as fh:
 
 setup(
     name='snowconn',
-    version='3.12.0',
+    version='3.13.0',
     description='Python utilities for connection to the Snowflake data '
                 'warehouse',
     url='https://github.com/Daltix/snowconn',
@@ -18,9 +18,9 @@ setup(
     author_email='snowconn@daltix.com',
     packages=['snowconn'],
     install_requires=[
-        'wheel==0.40.0',
-        'snowflake-connector-python==3.0.4',
-        'snowflake-sqlalchemy==1.4.7',
+        'wheel>=0.40.0,<0.46',
+        'snowflake-connector-python>=3.0.4,<3.14',
+        'snowflake-sqlalchemy>=1.4.7,<1.8',
         'six',
     ],
     long_description=long_description,
@@ -28,15 +28,15 @@ setup(
 
     extras_require={
         "pandas": [
-            "snowflake-connector-python[pandas]==3.0.4",
+            "snowflake-connector-python[pandas]>=3.0.4,<3.14",
         ],
         "storage": [
-            "snowflake-connector-python[secure-local-storage]==3.0.4",
+            "snowflake-connector-python[secure-local-storage]>=3.0.4,<3.14",
             'wheel',
         ],
         "all": [
             "boto3",
-            "snowflake-connector-python[secure-local-storage,pandas]==3.0.4",
+            "snowflake-connector-python[secure-local-storage,pandas]>=3.0.4,<3.14",
         ]
     }
 )
