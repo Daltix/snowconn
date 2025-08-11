@@ -1,0 +1,200 @@
+[project]
+name = "snowconn"
+version = "3.14.0"
+description = "Python utilities for connection to the Snowflake data warehouse"
+authors = [{ name = "Daltix NV", email = "snowconn@daltix.com" }]
+maintainers = [{ name = "Daltix NV", email = "snowconn@daltix.com" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+dependencies = [
+    "snowflake-connector-python>=3.0.4,<3.14",
+    "snowflake-sqlalchemy>=1.4.7,<1.8",
+    "sqlalchemy",
+    "cryptography",
+]
+
+[project.urls]
+Homepage = "https://github.com/daltix/snowconn"
+Documentation = "https://github.com/daltix/snowconn"
+Repository = "https://github.com/daltix/snowconn"
+"Bug Tracker" = "https://github.com/daltix/snowconn/issues"
+License = "https://github.com/daltix/snowconn/blob/master/LICENSE.md"
+
+[project.optional-dependencies]
+pandas = [
+    "snowflake-connector-python[pandas]>=3.0.4,<3.14",
+    "pandas",
+]
+storage = [
+    "snowflake-connector-python[secure-local-storage]>=3.0.4,<3.14",
+]
+all = [
+    "snowflake-connector-python[pandas,secure-local-storage]>=3.0.4,<3.14",
+    "boto3",
+]
+
+[dependency-groups]
+dev = [
+    "deptry>=0.20.0",
+    "mypy",
+    "pre-commit",
+    "pytest>=8.3.4",
+    "pytest-clarity>=1.0.1",
+    "pytest-cov",
+    "ruff>=0.9.6",
+    "moto[s3]>=5.0.28",
+    "sqlalchemy-stubs>=0.4",
+    "boto3-stubs[essential]>=1.36.20",
+    "pandas-stubs>=2.0.3.230814",
+]
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+####################
+### TOOLS CONFIG ###
+####################
+
+### LINTERS / FORMATTERS
+
+# ruff
+[tool.ruff]
+cache-dir = ".cache/ruff"
+src = ["snowconn", "tests"]
+line-length = 100
+show-fixes = true
+force-exclude = true
+output-format = "grouped"
+
+[tool.ruff.lint]
+select = [
+    # all rules: https://docs.astral.sh/ruff/rules/
+    "ANN2", # flake8-annotations
+    "ARG",  # flake8-unused-arguments
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "COM",  # flake8-commas
+    "D",    # pydocstyle
+    "E",    # pycodestyle
+    "ERA",  # eradicate
+    "EXE",  # flake8-executable
+    "F",    # pyflakes
+    "FA",   # flake8-future-annotations
+    "I",    # isort
+    "N",    # pep8-naming
+    "PD",   # pandas-vet
+    "PERF", # Perflint
+    "PL",   # pylint
+    "PT",   # flake8-pytest-style
+    "PTH",  # flake8-use-pathlib
+    "RUF",  # ruff-specific rules
+    "S",    # flake8-bandit
+    "SIM",  # flake8-simplify
+    "SLF",  # flake8-self
+    "TCH",  # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "UP",   # pyupgrade
+    "W",    # pycodestyle
+]
+ignore = [
+    "E501",   # line length regulated by formatter
+    "PD901",  # df is a bad variable name. Be kinder to your future self.
+    "PT011",  # pytest.raises({exception}) is too broad, set the match parameter or use a more specific exception
+    "TID252", # Prefer absolute imports over relative imports - we have complex package layouts, so it's good to have relative imports
+
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in __init__
+
+    # conflicts with formatter
+    "COM812", # Trailing comma missing
+]
+unfixable = [
+    "ERA001", # commented-out-code
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
+suppress-none-returning = true
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+combine-as-imports = true
+lines-after-imports = 2
+
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+    "TID252", # Prefer absolute imports over relative imports
+]
+"**/tests/**/*" = [
+    "ARG001",  # Unused function argument
+    "ARG002",  # Unused method argument
+    "D100",    # Missing docstring in public module
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring in public method
+    "D103",    # Missing docstring in public function
+    "D104",    # Missing docstring in public package
+    "N803",    # Argument name should be lowercase
+    "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
+    "S101",    # Use of assert detected
+    "S105",    # Possible hardcoded password assigned
+    "S106",    # Hardcoded password
+    "SLF001",  # Private member accessed
+]
+
+# mypy
+[tool.mypy]
+cache_dir = ".cache/mypy"
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+
+# deptry
+[tool.deptry.package_module_name_map]
+snowflake-connector-python = "snowflake"
+
+[tool.deptry.per_rule_ignores]
+DEP003 = ["snowconn"]  # bug with self package
+
+### TESTS
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "snowconn"]
+addopts = [
+    "--strict-markers",
+    "-vv",
+    "-r sxX",
+    "--cov=snowconn",
+    "--cov-report=html:.cache/htmlcov",
+    "--cov-report=term-missing:skip-covered",
+    "--no-cov-on-fail",
+]
+console_output_style = "count"
+cache_dir = ".cache/pytest"
+
+[tool.coverage.run]
+branch = true
+data_file = ".cache/coverage"
+omit = [".venv/*", "*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "except DistributionNotFound",
+    "TYPE_CHECKING",
+]

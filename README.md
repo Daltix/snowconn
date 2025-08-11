@@ -101,7 +101,7 @@ Now you must satisfy the folloing requirements:
 1. Have a secret stored in an accessable aws account
 1. The secret must have the following keys:
     - `USERNAME`
-    - `PASSWORD`
+    - `PRIVATE_KEY_ENCRYPTED` + `PRIVATE_KEY_PASSPHRASE`, or `PRIVATE_KEY`, or `PRIVATE_KEY_FILE` + `PRIVATE_KEY_FILE_PWD` (or `PASSWORD` - legacy to be dropped for machine users)
     - `ACCOUNT`
     - `ROLE`
 
@@ -285,8 +285,8 @@ This is the result of [create_engine()](https://docs.snowflake.net/manuals/user-
 which was called during `connect()` . It does not represent an active connection to the database
 but rather acts as a factory for connections.
 
-This is useful for using the most commonly abstracted things in other libraries such as dashboards, pandas, etc. 
-However, like SQLAlchemy in general, despite being very widely supported and feature-complete, it is not the simplest 
+This is useful for using the most commonly abstracted things in other libraries such as dashboards, pandas, etc.
+However, like SQLAlchemy in general, despite being very widely supported and feature-complete, it is not the simplest
 API so it should probably not be your first choice unless you know exactly that you need it.
 
 ### get_connection
