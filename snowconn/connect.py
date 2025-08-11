@@ -16,7 +16,7 @@ import json
 import logging
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Literal, Self
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Literal
 
 import snowflake.connector
 from sqlalchemy import create_engine
@@ -51,7 +51,7 @@ class SnowConn:
         self._connection = None
         self._raw_connection = None
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> SnowConn:
         return self
 
     def __exit__(
