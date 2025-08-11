@@ -192,7 +192,10 @@ def _sanitize_snowflake_credentials(creds: dict[str, Any]) -> dict[str, Any]:
     for cred_key, cred_val in creds.items():
         if cred_val is None or (isinstance(cred_val, str) and not cred_val.strip()):
             continue
-        norm_key = cred_key.lower().removeprefix(CREDS_ENV_VARS_PREFIX.lower()).strip()
+        norm_key = cred_key.lower()
+        if norm_key.startswith(CREDS_ENV_VARS_PREFIX.lower()):
+            norm_key = norm_key[len(CREDS_ENV_VARS_PREFIX):]
+        norm_key = norm_key.strip()
         mapped_norm_key = LEGACY_KEY_MAP.get(norm_key, norm_key)
         if mapped_norm_key in AVAILABLE_PARAMS and cred_val is not None and cred_val.strip() != "":
             norm_creds[mapped_norm_key] = cred_val
