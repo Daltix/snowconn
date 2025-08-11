@@ -33,7 +33,7 @@ help:
 
 .PHONY: install
 install: .cache install-git-hooks  ## Install project dependencies and tools
-	@ uv sync --all-extras --all-packages --group dev --frozen
+	@ uv sync --all-extras --all-packages --group dev
 
 install-git-hooks: .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/commit-msg
 
