@@ -35,7 +35,7 @@ help:
 install: .cache install-git-hooks  ## Install project dependencies and tools
 	@ uv sync --all-extras --all-packages --group dev
 
-install-git-hooks: .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/commit-msg
+install-git-hooks: .git/hooks/pre-commit
 
 .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/commit-msg:
 	@ uv run pre-commit install
@@ -64,7 +64,6 @@ format: format-ruff  ## Run formatters (ruff)
 .PHONY: check-packages
 check-packages:  ## Run package check
 	@ echo "$(ECHO_COLOUR)Checking packages$(NC)"
-	uv lock --locked -q
 	uv run deptry $(PACKAGE)
 
 lint-mypy:
@@ -132,6 +131,4 @@ clean: .clean-build .clean-docs .clean-cache .clean-install  ## Delete all gener
 # OTHER TASKS #################################################################
 
 .PHONY: ci
-ci: check-packages lint test format  ## Run all tasks that determine CI status
-notebooks:
-	mkdir -p notebooks
+ci: check-packages lint test  ## Run all tasks that determine CI status

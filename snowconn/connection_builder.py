@@ -62,14 +62,6 @@ class ConnectionError(Exception):
     """Base exception for connection-related errors."""
 
 
-class ConfigurationError(ConnectionError):
-    """Raised when there's an error in configuration loading or validation."""
-
-
-class AuthenticationError(ConnectionError):
-    """Raised when authentication fails."""
-
-
 def load_from_json_file(file: Path = SNOWFLAKE_SETTINGS_JSON_PATH) -> dict[str, Any]:
     """Load snowflake json config file.
 
@@ -241,6 +233,7 @@ def create_snowflake_sa_engine(creds: dict[str, Any]) -> Engine:
     Raises:
         ConnectionError: If the engine creation fails.
     """
+    creds = _sanitize_snowflake_credentials(creds)
     url_param_keys = {"user", "password", "account", "database", "schema"}
     connect_args = {k: creds[k] for k in creds if k not in url_param_keys and creds[k] is not None}
 

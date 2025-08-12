@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Literal
 
 import snowflake.connector
-from sqlalchemy import create_engine
 
 from snowconn.connection_builder import (
     SNOWFLAKE_CONFIG_FILE_PATH,
@@ -63,7 +62,12 @@ class SnowConn:
         self.close()
 
     @classmethod
-    def connect(cls, methods: Iterable[str] = ("local",), *args: Any, **kwargs: Any) -> SnowConn:
+    def connect(
+        cls,
+        methods: Iterable[Literal["local", "secretsmanager", "credentials"]] = ("local",),
+        *args: Any,
+        **kwargs: Any,
+    ) -> SnowConn:
         """Generic connect method.
 
         Will iterate through a list of connection methods until one succeeds
@@ -221,43 +225,18 @@ class SnowConn:
         warehouse: str | None = None,
         connect_args: dict[str, Any] | None = None,
     ) -> None:
-        account = creds["ACCOUNT"]
-        username = creds["USERNAME"]
-        password = creds["PASSWORD"]
-        authenticator = creds.get("AUTHENTICATOR")
         role = role if role else creds.get("ROLE")
-
-        if "." not in account:
-            logging.warning(
-                "You may need to configure your account name to include the "
-                f"region. For example: {account}.eu-west-1"
-            )
-
-        schema_portion = f"?schema={schema}"
-
-        role_portion = ""
-        if role:
-            role_portion = f"&role={role}"
-
-        autocommit_portion = ""
-        if autocommit:
-            autocommit_portion = "&autocommit=True"
-
-        warehouse_portion = ""
-        if warehouse:
-            warehouse_portion = f"&warehouse={warehouse}"
-
-        authenticator_portion = ""
-        if authenticator:
-            authenticator_portion = f"&authenticator={authenticator}"
-
-        connection_string = (
-            f"snowflake://{username}:{password}@{account}/{db}{schema_portion}"
-            f"{role_portion}{autocommit_portion}{warehouse_portion}{authenticator_portion}"
-        )
-
-        engine = create_engine(connection_string, connect_args=connect_args or {})
-        engine = create_snowflake_sa_engine(creds)
+        connect_args = connect_args or {}
+        engine_creds = {
+            **creds,
+            "autocommit": autocommit,
+            "schema": schema,
+            "warehouse": warehouse,
+            "role": role,
+            "database": db,
+            **connect_args,
+        }
+        engine = create_snowflake_sa_engine(engine_creds)
         self._alchemy_engine = engine
         self._connection = self._alchemy_engine.connect()
         self._raw_connection = self._connection.connection.connection
