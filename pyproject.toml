@@ -1,6 +1,6 @@
 [project]
 name = "snowconn"
-version = "3.14.0"
+version = "3.14.1"
 description = "Python utilities for connection to the Snowflake data warehouse"
 authors = [{ name = "Daltix NV", email = "snowconn@daltix.com" }]
 maintainers = [{ name = "Daltix NV", email = "snowconn@daltix.com" }]
