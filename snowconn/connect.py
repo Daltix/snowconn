@@ -25,6 +25,7 @@ from snowconn.connection_builder import (
     create_snowflake_sa_engine,
     load_from_aws_secret,
     load_from_snowflake_config_file,
+    sanitize_snowflake_credentials,
 )
 
 
@@ -80,15 +81,17 @@ class SnowConn:
             "local": cls.connect_local,
             "credentials": cls.connect_credentials,
         }
+        if not set(methods).intersection(available_methods.keys()):
+            raise InvalidMethodException(
+                f"methods {methods} are not a valid connection methods. Valid methods are {list(available_methods.keys())}"
+            )
         for method in methods:
             if method in available_methods:
                 try:
                     return available_methods[method](*args, **kwargs)
                 except Exception as e:
                     logging.error(e)
-        raise InvalidMethodException(
-            f'methods {methods} are not a valid connection methods. Valid methods are "secretsmanager, local, credentials"'
-        )
+        raise InvalidMethodException(f"None of the connection methods ({methods}) succeeded.")
 
     @classmethod
     def connect_local(  # noqa: PLR0913
@@ -225,17 +228,18 @@ class SnowConn:
         warehouse: str | None = None,
         connect_args: dict[str, Any] | None = None,
     ) -> None:
-        role = role if role else creds.get("ROLE")
         connect_args = connect_args or {}
-        engine_creds = {
-            **creds,
-            "autocommit": autocommit,
-            "schema": schema,
-            "warehouse": warehouse,
-            "role": role,
-            "database": db,
-            **connect_args,
-        }
+        provided_creds = sanitize_snowflake_credentials(
+            {
+                "autocommit": autocommit,
+                "schema": schema,
+                "warehouse": warehouse,
+                "role": role,
+                "database": db,
+                **connect_args,
+            }
+        )
+        engine_creds = {**creds, **provided_creds}
         engine = create_snowflake_sa_engine(engine_creds)
         self._alchemy_engine = engine
         self._connection = self._alchemy_engine.connect()

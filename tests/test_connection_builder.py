@@ -10,12 +10,12 @@ import pytest
 from snowconn.connection_builder import (
     ConnectionError,
     _load_private_with_passphrase,
-    _sanitize_snowflake_credentials,
     create_snowflake_sa_engine,
     load_from_aws_secret,
     load_from_env_vars,
     load_from_json_file,
     load_from_snowflake_config_file,
+    sanitize_snowflake_credentials,
 )
 from sqlalchemy.engine import Engine
 
@@ -206,7 +206,7 @@ class TestSanitizeSnowflakeCredentials:
             "role": "test_role",
         }
 
-        result = _sanitize_snowflake_credentials(raw_creds)
+        result = sanitize_snowflake_credentials(raw_creds)
 
         expected = {
             "account": "test_account",
@@ -227,7 +227,7 @@ class TestSanitizeSnowflakeCredentials:
             "rolename": "test_role",
         }
 
-        result = _sanitize_snowflake_credentials(raw_creds)
+        result = sanitize_snowflake_credentials(raw_creds)
 
         expected = {
             "account": "test_account",
@@ -247,7 +247,7 @@ class TestSanitizeSnowflakeCredentials:
             "snowflake_password": "test_password",  # lowercase prefix
         }
 
-        result = _sanitize_snowflake_credentials(raw_creds)
+        result = sanitize_snowflake_credentials(raw_creds)
 
         expected = {
             "account": "test_account",
@@ -265,7 +265,7 @@ class TestSanitizeSnowflakeCredentials:
             "user": "test_user",
         }
 
-        result = _sanitize_snowflake_credentials(raw_creds)
+        result = sanitize_snowflake_credentials(raw_creds)
 
         expected = {
             "account": "test_account",
@@ -286,7 +286,7 @@ class TestSanitizeSnowflakeCredentials:
             "private_key_passphrase": "passphrase",
         }
 
-        result = _sanitize_snowflake_credentials(raw_creds)
+        result = sanitize_snowflake_credentials(raw_creds)
 
         expected = {
             "account": "test_account",
@@ -308,7 +308,7 @@ class TestSanitizeSnowflakeCredentials:
             ValueError,
             match="private_key_encrypted is set but private_key_passphrase is not provided",
         ):
-            _sanitize_snowflake_credentials(raw_creds)
+            sanitize_snowflake_credentials(raw_creds)
 
 
 class TestLoadPrivateWithPassphrase:

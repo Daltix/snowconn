@@ -78,7 +78,7 @@ def load_from_json_file(file: Path = SNOWFLAKE_SETTINGS_JSON_PATH) -> dict[str, 
     except FileNotFoundError:
         logger.debug("File not found.")
         return {}
-    creds = _sanitize_snowflake_credentials(creds_dict)
+    creds = sanitize_snowflake_credentials(creds_dict)
     if creds:
         logger.info(f"Loaded snowflake credentials from json config file: {file}")
     else:
@@ -103,7 +103,7 @@ def load_from_snowflake_config_file(
     config.read(file)
     try:
         creds = dict(config[section])
-        creds = _sanitize_snowflake_credentials(creds)
+        creds = sanitize_snowflake_credentials(creds)
         if creds:
             logger.info(f"Loaded snowflake credentials from snowflake config file: {file}")
         else:
@@ -130,7 +130,7 @@ def load_from_env_vars() -> dict[str, Any]:
         for cred_key, cred_value in os.environ.items()
         if cred_key.startswith(CREDS_ENV_VARS_PREFIX)
     }
-    creds = _sanitize_snowflake_credentials(env_creds)
+    creds = sanitize_snowflake_credentials(env_creds)
     if creds:
         logger.info(
             f"Loaded snowflake credentials from environment variables with prefix {CREDS_ENV_VARS_PREFIX}"
@@ -163,7 +163,7 @@ def load_from_aws_secret(secret_name: str, session: boto3.Session) -> dict[str, 
     except json.JSONDecodeError:
         logger.error(f"Failed to decode JSON from secret: {secret_name}")
         return {}
-    creds = _sanitize_snowflake_credentials(data)
+    creds = sanitize_snowflake_credentials(data)
     if creds:
         logger.info(f"Loaded snowflake credentials from AWS Secrets Manager: {secret_name}")
     else:
@@ -172,7 +172,7 @@ def load_from_aws_secret(secret_name: str, session: boto3.Session) -> dict[str, 
 
 
 # utilities
-def _sanitize_snowflake_credentials(creds: dict[str, Any]) -> dict[str, Any]:
+def sanitize_snowflake_credentials(creds: dict[str, Any]) -> dict[str, Any]:
     """Sanitize and normalize snowflake credentials.
 
     This function filters out empty values and maps legacy keys to their current equivalents.
@@ -237,7 +237,7 @@ def create_snowflake_sa_engine(creds: dict[str, Any]) -> Engine:
     Raises:
         ConnectionError: If the engine creation fails.
     """
-    creds = _sanitize_snowflake_credentials(creds)
+    creds = sanitize_snowflake_credentials(creds)
     url_param_keys = {"user", "password", "account", "database", "schema"}
     connect_args = {k: creds[k] for k in creds if k not in url_param_keys and creds[k] is not None}
 
