@@ -1,0 +1,56 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+  "python.terminal.activateEnvironment": true,
+  // Linters/formatters
+  "ruff.path": ["${workspaceFolder}/.venv/bin/ruff"],
+  "mypy-type-checker.cwd": "${nearestConfig}",
+  "mypy-type-checker.args": ["--config-file=${workspaceFolder}/pyproject.toml"],
+  // Tests
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
+  "python.testing.pytestArgs": [],
+  // Vertical lines num characters
+  "editor.rulers": [
+    120
+  ],
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit"
+    },
+    "editor.rulers": [
+      {
+        "column": 80,
+        "color": "#40824c38"
+      },
+      {
+        "column": 100,
+        "color": "#80808067"
+      },
+      {
+        "column": 120,
+        "color": "#ff010168"
+      },
+    ]
+  },
+  "[jsonc]": {
+    "editor.rulers": []
+  },
+  "[git-commit]": {
+    "editor.rulers": [
+      50,
+      72
+    ]
+  },
+  "[markdown]": {
+    "editor.rulers": [
+      120,
+    ]
+  },
+  "files.associations": {
+    ".gitmessage": "git-commit",
+    "*.toml": "toml",
+    "*Makefile*": "makefile",
+  },
+}
