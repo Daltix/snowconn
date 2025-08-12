@@ -1,9 +1,23 @@
 # SnowConn
 
-This repository is a wrapper around the [snowflake SQLAlchemy](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html)
-library. It manages the creation of connections and provides a few convenience functions that should be good enough
-to cover most use cases yet be flexible enough to allow additional wrappers to be written around to serve more specific
-use cases for different teams.
+SnowConn is a Python library that wraps [Snowflake SQLAlchemy](https://docs.snowflake.net/manuals/user-guide/sqlalchemy.html) and [Snowflake Python Connector](https://docs.snowflake.net/manuals/user-guide/python-connector-api.html), making it easy to manage connections and interact with Snowflake. It provides convenience functions for common use cases, while remaining flexible for advanced scenarios.
+
+---
+
+## Quickstart
+
+Install from PyPI:
+```bash
+pip install snowconn
+```
+
+Connect and run a query:
+```python
+from snowconn import SnowConn
+with SnowConn.connect() as conn:
+    result = conn.execute_simple('SELECT CURRENT_ROLE();')
+    print(result)
+```
 
 ---
 
