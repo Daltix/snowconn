@@ -238,6 +238,7 @@ def create_snowflake_sa_engine(creds: dict[str, Any]) -> Engine:
         ConnectionError: If the engine creation fails.
     """
     creds = sanitize_snowflake_credentials(creds)
+    autocommit = bool(creds.pop("autocommit", False))
     url_param_keys = {"user", "password", "account", "database", "schema"}
     connect_args = {k: creds[k] for k in creds if k not in url_param_keys and creds[k] is not None}
 
@@ -267,7 +268,14 @@ def create_snowflake_sa_engine(creds: dict[str, Any]) -> Engine:
 
         connection_url = "".join(url_parts)
 
+        engine_kwargs: dict[str, Any] = {
+            "connect_args": connect_args,
+        }
+
+        if autocommit is True:
+            engine_kwargs["isolation_level"] = "AUTOCOMMIT"
+
         logger.debug("Creating SQLAlchemy engine")
-        return create_engine(connection_url, connect_args=connect_args)
+        return create_engine(connection_url, **engine_kwargs)
     except Exception as e:
         raise ConnectionError(f"Failed to create SQLAlchemy engine: {e}") from e
