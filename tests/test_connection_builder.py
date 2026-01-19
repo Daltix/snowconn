@@ -394,7 +394,7 @@ class TestCreateSnowflakeSaEngine:
         result = create_snowflake_sa_engine(creds)
 
         assert result == mock_engine
-        args, kwargs = mock_create_engine.call_args
+        args, _ = mock_create_engine.call_args
         connection_url = args[0]
         # Should not have password in URL
         assert "snowflake://test_user@test_account/test_db" in connection_url
@@ -413,7 +413,7 @@ class TestCreateSnowflakeSaEngine:
         result = create_snowflake_sa_engine(creds)
 
         assert result == mock_engine
-        args, kwargs = mock_create_engine.call_args
+        args, _ = mock_create_engine.call_args
         connection_url = args[0]
         assert "snowflake://test_user@test_account" in connection_url
 
