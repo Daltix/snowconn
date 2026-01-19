@@ -11,7 +11,8 @@ dependencies = [
     "snowflake-connector-python>=3.0.4,<3.14",
     "snowflake-sqlalchemy>=1.4.7,<1.8",
     "sqlalchemy",
-    "cryptography",
+    "cryptography>=41,<42",
+    "pyOpenSSL>=23.3,<24",
 ]
 
 [project.urls]
