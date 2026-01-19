@@ -105,7 +105,6 @@ select = [
 ]
 ignore = [
     "E501",   # line length regulated by formatter
-    "PD901",  # df is a bad variable name. Be kinder to your future self.
     "PT011",  # pytest.raises({exception}) is too broad, set the match parameter or use a more specific exception
     "TID252", # Prefer absolute imports over relative imports - we have complex package layouts, so it's good to have relative imports
 
